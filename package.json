@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@google-cloud/vision": "^4.3.2",
     "axios": "^1.7.7",
     "next": "14.2.13",
     "openai": "^4.67.3",
