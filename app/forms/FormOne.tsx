@@ -3,32 +3,37 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 
 const FormOne = ({ addToFeed }: { addToFeed: (item: any) => void }) => {
-  const [imageBase64, setImageBase64] = useState<string | null>(null);
+  const [imageBase64, setImageBase64] = useState<string>("");
   const [imageUrl, setImageUrl] = useState<string | null>(null);
-  const [description, setDescription] = useState("");
-  const [type, setType] = useState("");
-  const [color, setColor] = useState("");
-  const [quantity, setQuantity] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [description, setDescription] = useState<string>("");
+  const [type, setType] = useState<string>("");
+  const [color, setColor] = useState<string>("");
+  const [quantity, setQuantity] = useState<string>("");
+  const [businessName, setBusinessName] = useState<string>("");
+  const [firstName, setFirstName] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(false);
+  const [file, setFile] = useState<File | null>(null);
 
   const router = useRouter();
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      const file = e.target.files[0];
+      const selectedFile = e.target.files[0];
       const validFormats = ["image/png", "image/jpeg", "image/gif", "image/webp"];
-      if (!validFormats.includes(file.type)) {
+      if (!validFormats.includes(selectedFile.type)) {
         alert("Unsupported image format. Please upload a PNG, JPEG, GIF, or WEBP image.");
         return;
       }
+
+      setFile(selectedFile);
+      setImageUrl(URL.createObjectURL(selectedFile));
 
       const reader = new FileReader();
       reader.onloadend = () => {
         const base64String = reader.result as string;
         setImageBase64(base64String);
-        setImageUrl(URL.createObjectURL(file));
       };
-      reader.readAsDataURL(file);
+      reader.readAsDataURL(selectedFile);
     }
   };
 
@@ -66,34 +71,57 @@ const FormOne = ({ addToFeed }: { addToFeed: (item: any) => void }) => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     // Validation check
-    if (!description || !type || !color || !quantity) {
+    if (!description || !type || !color || !quantity || !businessName || !firstName || !file) {
       alert("Please fill in all fields before submitting the listing.");
       return;
     }
 
-    const newListing = {
-      imageUrl,
-      description,
-      type,
-      color,
-      quantity,
-    };
+    const formData = new FormData();
+    formData.append('image', file as Blob); // Cast to Blob to avoid type issues
 
-    addToFeed(newListing);
+    try {
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
 
-    // Reset form
-    setImageBase64(null);
-    setDescription("");
-    setType("");
-    setColor("");
-    setQuantity("");
-    setImageUrl(null);
+      if (!response.ok) {
+        throw new Error('Failed to upload image');
+      }
 
-    router.push("/landing");
+      const result = await response.json();
+      const newListing = {
+        imageUrl: result.secure_url, // Use the URL returned from Cloudinary
+        description,
+        type,
+        color,
+        quantity,
+        businessName,
+        firstName,
+      };
+
+      addToFeed(newListing);
+
+      // Reset form
+      setImageBase64("");
+      setDescription("");
+      setType("");
+      setColor("");
+      setQuantity("");
+      setBusinessName("");
+      setFirstName("");
+      setImageUrl(null);
+      setFile(null);
+
+      router.push("/landing");
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      alert("An error occurred while uploading the image.");
+    }
   };
 
   return (
@@ -109,12 +137,37 @@ const FormOne = ({ addToFeed }: { addToFeed: (item: any) => void }) => {
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
+          <label className="block text-lg font-medium">Business Name</label>
+          <input
+            type="text"
+            value={businessName}
+            onChange={(e) => setBusinessName(e.target.value)}
+            placeholder="Business Name"
+            className="mt-2 w-full text-gray-700 border border-gray-300 rounded-lg p-2"
+            required
+          />
+        </div>
+
+        <div>
+          <label className="block text-lg font-medium">First Name</label>
+          <input
+            type="text"
+            value={firstName}
+            onChange={(e) => setFirstName(e.target.value)}
+            placeholder="First Name"
+            className="mt-2 w-full text-gray-700 border border-gray-300 rounded-lg p-2"
+            required
+          />
+        </div>
+
+        <div>
           <label className="block text-lg font-medium">Upload Image</label>
           <input
             type="file"
             accept="image/*"
             onChange={handleImageUpload}
             className="mt-2 block w-full text-gray-700 border border-gray-300 rounded-lg p-2"
+            required
           />
           {imageUrl && (
             <div className="mt-4">

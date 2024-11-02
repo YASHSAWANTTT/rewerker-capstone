@@ -9,7 +9,10 @@ const FormOne = ({ addToFeed }: { addToFeed: (item: any) => void }) => {
   const [type, setType] = useState("");
   const [color, setColor] = useState("");
   const [quantity, setQuantity] = useState("");
+  const [email, setEmail] = useState(""); 
+  const [firstName, setFirstName] = useState(""); 
   const [loading, setLoading] = useState(false);
+  const [marketStatus, setMarketStatus] = useState("");
 
   const router = useRouter();
 
@@ -70,7 +73,7 @@ const FormOne = ({ addToFeed }: { addToFeed: (item: any) => void }) => {
     e.preventDefault();
 
     // Validation check
-    if (!description || !type || !color || !quantity) {
+    if (!description || !type || !color || !quantity || !firstName || !email || !marketStatus) {
       alert("Please fill in all fields before submitting the listing.");
       return;
     }
@@ -81,6 +84,9 @@ const FormOne = ({ addToFeed }: { addToFeed: (item: any) => void }) => {
       type,
       color,
       quantity,
+      firstName, 
+      email,
+      marketStatus,
     };
 
     addToFeed(newListing);
@@ -91,7 +97,11 @@ const FormOne = ({ addToFeed }: { addToFeed: (item: any) => void }) => {
     setType("");
     setColor("");
     setQuantity("");
+    setFirstName("");
+    setEmail("");
+    setMarketStatus("");
     setImageUrl(null);
+
 
     router.push("/landing");
   };
@@ -108,6 +118,17 @@ const FormOne = ({ addToFeed }: { addToFeed: (item: any) => void }) => {
       <h2 className="text-2xl font-bold mb-4">Image Upload & Description</h2>
 
       <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="block text-lg font-medium">First Name</label>
+          <input
+            type="text"
+            value={firstName}
+            onChange={(e) => setFirstName(e.target.value)}
+            placeholder="First Name"
+            className="mt-2 w-full text-gray-700 border border-gray-300 rounded-lg p-2"
+            required
+          />
+        </div>
         <div>
           <label className="block text-lg font-medium">Upload Image</label>
           <input
@@ -179,6 +200,43 @@ const FormOne = ({ addToFeed }: { addToFeed: (item: any) => void }) => {
             className="mt-2 w-full text-gray-700 border border-gray-300 rounded-lg p-2"
             required
           />
+        </div>
+
+        <div>
+          <label className="block text-lg font-medium">Email</label>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="Email"
+            className="mt-2 w-full text-gray-700 border border-gray-300 rounded-lg p-2"
+            required
+          />
+        </div>
+        <div>
+          <label className="block text-lg font-medium">Market Status</label>
+          <div className="mt-2">
+            <label className="inline-flex items-center mr-4">
+              <input
+                type="radio"
+                value="Accepted! Bring to the Market"
+                checked={marketStatus === "Accepted! Bring to the Market"}
+                onChange={(e) => setMarketStatus(e.target.value)}
+                className="mr-2"
+              />
+              Accepted! Bring to the Market
+            </label>
+            <label className="inline-flex items-center">
+              <input
+                type="radio"
+                value="Not this time"
+                checked={marketStatus === "Not this time"}
+                onChange={(e) => setMarketStatus(e.target.value)}
+                className="mr-2"
+              />
+              Not this time
+            </label>
+          </div>
         </div>
 
         <div>
