@@ -3,35 +3,39 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 
 const FormOne = ({ addToFeed }: { addToFeed: (item: any) => void }) => {
-  const [imageBase64, setImageBase64] = useState<string | null>(null);
+
+  const [imageBase64, setImageBase64] = useState<string>("");
   const [imageUrl, setImageUrl] = useState<string | null>(null);
-  const [description, setDescription] = useState("");
-  const [type, setType] = useState("");
-  const [color, setColor] = useState("");
-  const [quantity, setQuantity] = useState("");
-  const [email, setEmail] = useState(""); 
-  const [firstName, setFirstName] = useState(""); 
-  const [loading, setLoading] = useState(false);
-  const [marketStatus, setMarketStatus] = useState("");
+  const [description, setDescription] = useState<string>("");
+  const [type, setType] = useState<string>("");
+  const [color, setColor] = useState<string>("");
+  const [quantity, setQuantity] = useState<string>("");
+  const [firstName, setFirstName] = useState<string>("");
+  const [email, setEmail] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(false);
+  const [file, setFile] = useState<File | null>(null);
 
   const router = useRouter();
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      const file = e.target.files[0];
+      const selectedFile = e.target.files[0];
       const validFormats = ["image/png", "image/jpeg", "image/gif", "image/webp"];
-      if (!validFormats.includes(file.type)) {
+      if (!validFormats.includes(selectedFile.type)) {
         alert("Unsupported image format. Please upload a PNG, JPEG, GIF, or WEBP image.");
         return;
       }
+
+      setFile(selectedFile);
+      setImageUrl(URL.createObjectURL(selectedFile));
 
       const reader = new FileReader();
       reader.onloadend = () => {
         const base64String = reader.result as string;
         setImageBase64(base64String);
-        setImageUrl(URL.createObjectURL(file));
+        setImageUrl(URL.createObjectURL(selectedFile));
       };
-      reader.readAsDataURL(file);
+      reader.readAsDataURL(selectedFile);
     }
   };
 
@@ -69,42 +73,61 @@ const FormOne = ({ addToFeed }: { addToFeed: (item: any) => void }) => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
+  
     // Validation check
-    if (!description || !type || !color || !quantity || !firstName || !email || !marketStatus) {
+    if (!description || !type || !color || !quantity || !firstName || !email || !file) {
       alert("Please fill in all fields before submitting the listing.");
       return;
     }
-
-    const newListing = {
-      imageUrl,
-      description,
-      type,
-      color,
-      quantity,
-      firstName, 
-      email,
-      marketStatus,
-    };
-
-    addToFeed(newListing);
-
-    // Reset form
-    setImageBase64(null);
-    setDescription("");
-    setType("");
-    setColor("");
-    setQuantity("");
-    setFirstName("");
-    setEmail("");
-    setMarketStatus("");
-    setImageUrl(null);
-
-
-    router.push("/landing");
+    
+    const formData = new FormData();
+    formData.append('image', file as Blob); // Ensure file is not null
+    
+    try {
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+  
+      if (!response.ok) {
+        const errorData = await response.json(); // Get error message if available
+        throw new Error(errorData.message || 'Failed to upload image');
+      }
+  
+      const result = await response.json();
+  
+      const newListing = {
+        imageUrl: result.secure_url, // Ensure secure_url is in response
+        description,
+        type,
+        color,
+        quantity,
+        email,
+        firstName,
+      };
+  
+      addToFeed(newListing);
+  
+      // Reset form
+      setImageBase64("");
+      setDescription("");
+      setType("");
+      setColor("");
+      setQuantity("");
+      setFirstName("");
+      setEmail("");
+      setImageUrl(null);
+      setFile(null);
+  
+      router.push("/landing");
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      alert("An error occurred while uploading the image.");
+    }
   };
+  
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-lg relative">
@@ -212,31 +235,6 @@ const FormOne = ({ addToFeed }: { addToFeed: (item: any) => void }) => {
             className="mt-2 w-full text-gray-700 border border-gray-300 rounded-lg p-2"
             required
           />
-        </div>
-        <div>
-          <label className="block text-lg font-medium">Market Status</label>
-          <div className="mt-2">
-            <label className="inline-flex items-center mr-4">
-              <input
-                type="radio"
-                value="Accepted! Bring to the Market"
-                checked={marketStatus === "Accepted! Bring to the Market"}
-                onChange={(e) => setMarketStatus(e.target.value)}
-                className="mr-2"
-              />
-              Accepted! Bring to the Market
-            </label>
-            <label className="inline-flex items-center">
-              <input
-                type="radio"
-                value="Not this time"
-                checked={marketStatus === "Not this time"}
-                onChange={(e) => setMarketStatus(e.target.value)}
-                className="mr-2"
-              />
-              Not this time
-            </label>
-          </div>
         </div>
 
         <div>

@@ -9,11 +9,32 @@ import "swiper/swiper-bundle.css";
 const LandingPage = () => {
   const [selectedForm, setSelectedForm] = useState<string | null>(null);
   const [makersFeed, setMakersFeed] = useState<
-    { id: string; imageUrl: string; description: string; type: string; color: string; quantity: string }[]
+    { 
+      id: string; 
+      imageUrl: string; 
+      description: string; 
+      type: string; 
+      color: string; 
+      quantity: string; 
+      firstName: string; // Added
+      businessName: string; // Added
+    }[]
   >([]);
   const [collectorsFeed, setCollectorsFeed] = useState<
-    { id: string; imageUrl: string; description: string; type: string; color: string; quantity: string }[]
-  >([]);
+  { 
+    id: string; 
+    imageUrl: string; 
+    description: string; 
+    type: string; 
+    color: string; 
+    quantity: string; 
+    firstName: string; // Added
+    email: string; // Added
+    marketStatus: string; // Added
+  }[]
+>([]);
+
+  //const [marketStatus, setMarketStatus] = useState<string>("");
   const router = useRouter();
 
   // Load feed data from localStorage on mount
@@ -40,6 +61,14 @@ const LandingPage = () => {
   const addToCollectorsFeed = (newListing: any) => {
     const listingWithId = { ...newListing, id: Date.now().toString() };
     const updatedFeed = [...collectorsFeed, listingWithId];
+    setCollectorsFeed(updatedFeed);
+    localStorage.setItem("collectorsFeed", JSON.stringify(updatedFeed));
+  };
+
+  const updateMarketStatus = (id: string, status: string) => {
+    const updatedFeed = collectorsFeed.map(item =>
+      item.id === id ? { ...item, marketStatus: status } : item
+    );
     setCollectorsFeed(updatedFeed);
     localStorage.setItem("collectorsFeed", JSON.stringify(updatedFeed));
   };
@@ -92,6 +121,8 @@ const LandingPage = () => {
                         alt={item.description}
                         className="w-full h-48 object-cover rounded-lg mb-4"
                       />
+                      <p><strong>Business Name:</strong> {item.businessName}</p> {/* Display business name */}
+                      <p><strong>First Name:</strong> {item.firstName}</p> {/* Display first name */}
                       <p><strong>Description:</strong> {item.description}</p>
                       <p><strong>Type:</strong> {item.type}</p>
                       <p><strong>Color:</strong> {item.color}</p>
@@ -123,6 +154,7 @@ const LandingPage = () => {
             {selectedForm === "form2" && <FormTwo addToFeed={addToCollectorsFeed} />}
             <div className="mt-6 p-4">
               <h3 className="text-xl font-bold">Collectors Feed</h3>
+
               <Swiper spaceBetween={20} slidesPerView={1} navigation pagination={{ clickable: true }}>
                 {collectorsFeed.map((item, index) => (
                   <SwiperSlide key={item.id}>
@@ -132,10 +164,38 @@ const LandingPage = () => {
                         alt={item.description}
                         className="w-full h-48 object-cover rounded-lg mb-4"
                       />
+                      <p><strong>First Name:</strong> {item.firstName}</p>
+                      <p><strong>Email:</strong> {item.email}</p>
                       <p><strong>Description:</strong> {item.description}</p>
                       <p><strong>Type:</strong> {item.type}</p>
                       <p><strong>Color:</strong> {item.color}</p>
                       <p><strong>Quantity:</strong> {item.quantity}</p>
+                      <p><strong>Market Status:</strong> {item.marketStatus}</p>
+
+                      {/* Radio Buttons for Market Status */}
+                      <div className="mt-2">
+                        <p className="font-medium">Market Status:</p>
+                        <label className="inline-flex items-center mr-4">
+                          <input
+                            type="radio"
+                            value="Accepted! Bring to the Market"
+                            checked={item.marketStatus === "Accepted! Bring to the Market"}
+                            onChange={() => updateMarketStatus(item.id, "Accepted! Bring to the Market")}
+                            className="mr-2"
+                          />
+                          Accepted! Bring to the Market
+                        </label>
+                        <label className="inline-flex items-center">
+                          <input
+                            type="radio"
+                            value="Not this time"
+                            checked={item.marketStatus === "Not this time"}
+                            onChange={() => updateMarketStatus(item.id, "Not this time")}
+                            className="mr-2"
+                          />
+                          Not this time
+                        </label>
+                      </div>
                       <button
                         onClick={() => deleteFromCollectorsFeed(item.id)}
                         className="mt-2 bg-red-500 text-white px-4 py-1 rounded-lg hover:bg-red-600 transition"
