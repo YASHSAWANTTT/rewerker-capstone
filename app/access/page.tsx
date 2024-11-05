@@ -19,9 +19,7 @@ export default function AccessPage() {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-gray-700 via-gray-900 to-black">
-      <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-4 text-white">
-        NowhereCollective
-      </h1>
+       <img src="/image.png" width="500" height="500" alt="logo" />
       <form onSubmit={handleSubmit} className="flex flex-col space-y-4">
         <input
           type="password"
