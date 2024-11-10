@@ -182,7 +182,9 @@ const FormOne = ({ addToFeed }: { addToFeed: (item: any) => void }) => {
           <button
             type="button"
             onClick={handleGPTGeneration}
-            className="mt-2 bg-blue-500 text-white px-4 py-1 rounded-lg"
+            className="mt-2 text-white px-4 py-1 rounded-lg"
+            style={{ backgroundColor: '#3856DE' }}
+
             disabled={loading}
           >
             {loading ? "Generating..." : "Generate Description with GPT"}
@@ -240,7 +242,8 @@ const FormOne = ({ addToFeed }: { addToFeed: (item: any) => void }) => {
         <div>
           <button
             type="submit"
-            className="w-full bg-green-500 text-white py-2 rounded-lg"
+            className="w-full text-white py-2 rounded-lg"
+            style={{ backgroundColor: '#1F5D53' }}
           >
             Submit Listing
           </button>

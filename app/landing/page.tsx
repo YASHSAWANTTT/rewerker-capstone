@@ -130,12 +130,16 @@ const LandingPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 text-black flex flex-col">
-      <header className="bg-white shadow-sm p-4">
+    <div className="min-h-screen bg-white text-black flex flex-col">
+      <header className="bg-[rgba(240,191,34,0.5)] p-4">
         <img src="/image.png" width="200" height="200" alt="logo" />
       </header>
 
-      <div className="text-center p-6 bg-white border-b border-gray-300">
+      <div className="text-center p-6 bg-[rgba(240,191,34,0.5)] bg-white border-b border-gray-300"
+                  
+
+>
+        
         <h1 className="text-4xl font-semibold">Join our Trashy Market material collection!</h1>
         <p className="text-lg mt-2">These REmakers are accepting specific reusable materials at
            the Trashy Market (Nov 29-30). These materials will be transformed into one-of-a-kind 
@@ -146,25 +150,32 @@ const LandingPage = () => {
 
       <div className="flex flex-grow">
         {/* Makers Side */}
-        <div className="w-1/2 p-8 bg-gray-50 border-r border-gray-300">
+        <div className="w-1/2 p-8 bg-white border-r border-gray-300">
           <h2 className="text-2xl font-bold mb-4">REMAKER: Material Requests</h2>
-          <p className="text-base text-gray-800 mb-24">
+          <p className="text-base text-gray-800 mb-6">
             If you are a REmaker accepting materials at the Trashy Market, fill out the form below to post your material request.
+            Check in on the Collectors feed to claim your materials!
           </p>
-          <button
-            onClick={() => setSelectedForm("form1")}
-            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition"
-          >
-            Select Makers Form
-          </button>
+          <a
+  href="#"
+  onClick={(e) => {
+    e.preventDefault(); // Prevent default anchor behavior
+    setSelectedForm("form1");
+  }}
+  className="text-[#1F5D53] font-bold text-xl underline hover:opacity-80"
+>
+  Makers Form
+</a>
+
+
 
           <div className="mt-8">
             {selectedForm === "form1" && <FormOne addToFeed={addToMakersFeed} />}
-            <div className="mt-6 p-6 max-w-4xl mx-auto">
+            <div className="mt-6 p-6 max-w-4xl mx-auto shadow-md">
               <h3 className="text-xl font-bold">Makers Feed</h3>
               <div className="space-y-6 overflow-y-auto max-h-96">
                 {makersFeed.map((item) => (
-                  <div key={item.id} className="bg-gray-200 p-6 rounded-lg">
+                    <div key={item.id} className="bg-white p-6 rounded-lg shadow-md">
                     <div className="flex justify-center mb-4">
                     <img
                       src={item.imageUrl}
@@ -192,7 +203,7 @@ const LandingPage = () => {
         </div>
 
         {/* Collectors Side */}
-        <div className="w-1/2 p-8 bg-gray-50">
+        <div className="w-1/2 p-8 bg-white">
           <h2 className="text-2xl font-bold mb-4">COLLECTOR: Material Offers</h2>
           <p className="text-base text-gray-800 mb-6">
             Scroll through the REmaker material requests to see if you have materials that match. 
@@ -201,19 +212,25 @@ const LandingPage = () => {
             approved, bring it to the REmaker at the Trashy Market 
             (Mrs. Murphy's Irish Bistro 3905 N Lincoln Ave).
           </p>
-          <button
-            onClick={() => setSelectedForm("form2")}
-            className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition"
-          >
-            Select Collectors Form
-          </button>
+          <a
+  href="#"
+  onClick={(e) => {
+    e.preventDefault(); // Prevent default anchor behavior
+    setSelectedForm("form2");
+  }}
+  className="text-[#1F5D53] font-bold text-xl underline hover:opacity-80"
+>
+  Collectors Form
+</a>
+
+
           <div className="mt-8">
             {selectedForm === "form2" && <FormTwo addToFeed={addToCollectorsFeed} />}
-            <div className="mt-6 p-6 max-w-4xl mx-auto">
+            <div className="mt-6 p-6 max-w-4xl mx-auto shadow-md">
               <h3 className="text-xl font-bold">Collectors Feed</h3>
               <div className="space-y-6 overflow-y-auto max-h-96">
                 {collectorsFeed.map((item) => (
-                  <div key={item.id} className="bg-gray-200 p-6 rounded-lg">
+                  <div key={item.id} className="bg-white p-6 rounded-lg shadow-md">
                     
                     <div className="flex justify-center mb-4">
                     <img
@@ -258,7 +275,8 @@ const LandingPage = () => {
                         <button
                           onClick={() => updateMarketStatus(item.id, "Accepted! Bring to the Market", item.firstNameClaimed || "")}
                           disabled={!item.firstNameClaimed}
-                          className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition"
+                          className="px-4 py-2 text-white rounded-lg hover:bg-blue-600 transition"
+                          style={{ backgroundColor: '#3856DE' }}
                         >
                           Confirm
                         </button>
