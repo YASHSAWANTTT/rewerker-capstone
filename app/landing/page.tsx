@@ -160,16 +160,18 @@ const LandingPage = () => {
 
           <div className="mt-8">
             {selectedForm === "form1" && <FormOne addToFeed={addToMakersFeed} />}
-            <div className="mt-6 p-4">
+            <div className="mt-6 p-6 max-w-4xl mx-auto">
               <h3 className="text-xl font-bold">Makers Feed</h3>
               <div className="space-y-6 overflow-y-auto max-h-96">
                 {makersFeed.map((item) => (
-                  <div key={item.id} className="bg-gray-200 p-4 rounded-lg">
+                  <div key={item.id} className="bg-gray-200 p-6 rounded-lg">
+                    <div className="flex justify-center mb-4">
                     <img
                       src={item.imageUrl}
                       alt={item.description}
-                      className="w-full h-48 object-cover rounded-lg mb-4"
+                      className="w-full sm:w-80 md:w-96 lg:w-[400px] xl:w-[500px] h-auto object-cover rounded-lg"
                     />
+                    </div>
                     <p><strong>Business Name:</strong> {item.businessName}</p>
                     <p><strong>First Name:</strong> {item.firstName}</p>
                     <p><strong>Description:</strong> {item.description}</p>
@@ -217,7 +219,8 @@ const LandingPage = () => {
                     <img
                       src={item.imageUrl}
                       alt={item.description}
-                      className="w-64 h-64 sm:w-72 sm:h-72 md:w-80 md:h-80 object-cover rounded-lg"
+                      className="w-full sm:w-80 md:w-96 lg:w-[400px] xl:w-[500px] h-auto object-cover rounded-lg"
+
                     />
                     </div>
                     <p><strong>First Name:</strong> {item.firstName}</p>
