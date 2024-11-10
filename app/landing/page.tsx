@@ -207,16 +207,19 @@ const LandingPage = () => {
           </button>
           <div className="mt-8">
             {selectedForm === "form2" && <FormTwo addToFeed={addToCollectorsFeed} />}
-            <div className="mt-6 p-4">
+            <div className="mt-6 p-6 max-w-4xl mx-auto">
               <h3 className="text-xl font-bold">Collectors Feed</h3>
               <div className="space-y-6 overflow-y-auto max-h-96">
                 {collectorsFeed.map((item) => (
-                  <div key={item.id} className="bg-gray-200 p-4 rounded-lg">
+                  <div key={item.id} className="bg-gray-200 p-6 rounded-lg">
+                    
+                    <div className="flex justify-center mb-4">
                     <img
                       src={item.imageUrl}
                       alt={item.description}
-                      className="w-full h-48 object-cover rounded-lg mb-4"
+                      className="w-64 h-64 sm:w-72 sm:h-72 md:w-80 md:h-80 object-cover rounded-lg"
                     />
+                    </div>
                     <p><strong>First Name:</strong> {item.firstName}</p>
                     <p><strong>Email:</strong> {item.email}</p>
                     <p><strong>Description:</strong> {item.description}</p>
