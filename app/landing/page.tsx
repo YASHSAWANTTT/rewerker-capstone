@@ -66,18 +66,46 @@ const LandingPage = () => {
   };
 
   const updateMarketStatus = (id: string, status: string, claimedBy: string) => {
-    const updatedFeed = collectorsFeed.map(item =>
-      item.id === id ? { ...item, marketStatus: status, claimedBy: claimedBy } : item
+    const item = collectorsFeed.find((item) => item.id === id);
+    
+    const updatedFeed = collectorsFeed.map((item) =>
+      item.id === id ? { ...item, marketStatus: status, claimedBy } : item
     );
     setCollectorsFeed(updatedFeed);
     localStorage.setItem("collectorsFeed", JSON.stringify(updatedFeed));
-    sendClaimEmailNotification(claimedBy, id);
+  
+    if (item) {
+      sendClaimEmailNotification(claimedBy, item.email, item.firstName, item.id);
+    }
   };
-
-  const sendClaimEmailNotification = (claimedBy: string, itemId: string) => {
-    console.log(`Email sent: The item with ID ${itemId} has been claimed by ${claimedBy}.`);
-    alert(`An email has been sent to notify ${claimedBy} that their item has been claimed.`);
+  
+  const sendClaimEmailNotification = async (claimedBy: string, recipientEmail: string, firstName: string, itemId: string) => {
+    try {
+      const response = await fetch('/api/send-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          recipientEmail,
+          claimedBy,
+          firstName,
+          itemId,
+        }),
+      });
+  
+      if (response.ok) {
+        console.log('Email sent successfully');
+        alert(`An email has been sent to notify ${firstName} that their item has been claimed.`);
+      } else {
+        console.error('Failed to send email');
+      }
+    } catch (error) {
+      console.error('Error sending email:', error);
+    }
   };
+  
+  
 
   // Delete a listing and update localStorage
   const deleteFromMakersFeed = (id: string) => {
