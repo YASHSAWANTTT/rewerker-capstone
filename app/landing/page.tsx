@@ -69,21 +69,22 @@ const LandingPage = () => {
   }, []);
   
 
-  // Add listing with unique ID and save to localStorage
   const addToMakersFeed = async (newListing: object) => {
-    const listingWithId = { ...newListing, id: Date.now().toString() };
     try {
-      const response = await fetch('/api/makers-feed', {
+      const response = await fetch('/api/add-to-makers-feed', { // Use the specific endpoint
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(listingWithId),
+        body: JSON.stringify(newListing),
       });
   
       if (response.ok) {
         const addedListing = await response.json();
-        setMakersFeed((prevFeed) => [...prevFeed, addedListing]);
+        setMakersFeed((prevFeed) => [...prevFeed, addedListing.listing]);
+      } else if (response.status === 409) {
+        console.error('Duplicate listing detected');
+        alert("Duplicate listing detected. This listing already exists.");
       } else {
         console.error('Failed to add new listing');
       }
@@ -91,6 +92,7 @@ const LandingPage = () => {
       console.error('Error adding new listing:', error);
     }
   };
+  
   
 
   const addToCollectorsFeed = async (newListing: object) => {

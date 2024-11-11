@@ -73,26 +73,26 @@ const FormOne = ({ addToFeed, closeModal }: { addToFeed: (item: any) => void; cl
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
+  
     // Validation check
     if (!description || !type || !color || !quantity || !businessName || !firstName || !file) {
       alert("Please fill in all fields before submitting the listing.");
       return;
     }
-
+  
     const formData = new FormData();
     formData.append('image', file as Blob); // Cast to Blob to avoid type issues
-
+  
     try {
       const response = await fetch('/api/upload', {
         method: 'POST',
         body: formData,
       });
-
+  
       if (!response.ok) {
         throw new Error('Failed to upload image');
       }
-
+  
       const result = await response.json();
       const newListing = {
         imageUrl: result.secure_url, // Use the URL returned from Cloudinary
@@ -100,10 +100,10 @@ const FormOne = ({ addToFeed, closeModal }: { addToFeed: (item: any) => void; cl
         type,
         color,
         quantity,
-        businessName,
+        businessName, // Include businessName here
         firstName,
       };
-
+  
       const feedResponse = await fetch('/api/add-to-makers-feed', {
         method: 'POST',
         headers: {
@@ -118,7 +118,7 @@ const FormOne = ({ addToFeed, closeModal }: { addToFeed: (item: any) => void; cl
   
       const feedResult = await feedResponse.json();
       addToFeed(feedResult.listing);
-     
+  
       // Reset form
       setImageBase64("");
       setDescription("");
@@ -129,13 +129,14 @@ const FormOne = ({ addToFeed, closeModal }: { addToFeed: (item: any) => void; cl
       setFirstName("");
       setImageUrl(null);
       setFile(null);
-
+  
       closeModal();
     } catch (error) {
       console.error("Error uploading image:", error);
       alert("An error occurred while uploading the image.");
     }
   };
+  
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-lg relative">
