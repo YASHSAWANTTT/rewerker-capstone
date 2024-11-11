@@ -3,83 +3,75 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import FormOne from "../forms/FormOne";
 import FormTwo from "../forms/FormTwo";
-import { ObjectId } from "mongodb";
 
-const LandingPage = () => {
+type MakerItem = {
+  id: string;
+  imageUrl: string;
+  description: string;
+  type: string;
+  color: string;
+  quantity: string;
+  firstName: string;
+  businessName: string;
+};
+
+type CollectorItem = {
+  id: string;
+  imageUrl: string;
+  description: string;
+  type: string;
+  color: string;
+  quantity: string;
+  firstName: string;
+  email: string;
+  marketStatus: string;
+  claimedBy: string | null;
+  firstNameClaimed?: string;
+};
+
+const LandingPage: React.FC = () => {
   const [selectedForm, setSelectedForm] = useState<string | null>(null);
-  const [makersFeed, setMakersFeed] = useState< 
-    { 
-      id: string; 
-      imageUrl: string; 
-      description: string; 
-      type: string; 
-      color: string; 
-      quantity: string; 
-      firstName: string; 
-      businessName: string; 
-    }[] 
-  >([]);
-  
-  const [collectorsFeed, setCollectorsFeed] = useState< 
-    { 
-      id: string; 
-      imageUrl: string; 
-      description: string; 
-      type: string; 
-      color: string; 
-      quantity: string; 
-      firstName: string; 
-      email: string; 
-      marketStatus: string; 
-      claimedBy: string | null; 
-      firstNameClaimed?: string; 
-    }[] 
-  >([]);
-
+  const [makersFeed, setMakersFeed] = useState<MakerItem[]>([]);
+  const [collectorsFeed, setCollectorsFeed] = useState<CollectorItem[]>([]);
   const router = useRouter();
 
-  // Load feed data from localStorage on mount
+  // Load makers feed
   useEffect(() => {
     const fetchData = async () => {
       try {
         const response = await fetch('/api/makers-feed');
         const data = await response.json();
-        console.log('Fetched data:', data); // Check the data structure here
         setMakersFeed(Array.isArray(data) ? data : data.makers || []);
       } catch (error) {
         console.error("Failed to fetch makers feed:", error);
       }
     };
-  
     fetchData();
   }, []);
 
+  // Load collectors feed
   useEffect(() => {
     const fetchData = async () => {
       try {
         const response = await fetch('/api/collectors-feed');
         const data = await response.json();
-        console.log('Fetched data:', data); // Check the data structure here
         setCollectorsFeed(Array.isArray(data) ? data : data.collectors || []);
       } catch (error) {
-        console.error("Failed to fetch makers feed:", error);
+        console.error("Failed to fetch collectors feed:", error);
       }
     };
-  
     fetchData();
   }, []);
-  
 
-  const addToMakersFeed = async (newListing: object) => {
+  const addToMakersFeed = async (newListing: MakerItem) => {
     try {
-      const response = await fetch('/api/add-to-makers-feed', { // Use the specific endpoint
+      const response = await fetch('/api/add-to-makers-feed', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(newListing),
       });
-  
       if (response.ok) {
         const addedListing = await response.json();
         setMakersFeed((prevFeed) => [...prevFeed, addedListing.listing]);
@@ -92,19 +84,16 @@ const LandingPage = () => {
       console.error('Error adding new listing:', error);
     }
   };
-  
-  
 
-  const addToCollectorsFeed = async (newListing: object) => {
+  const addToCollectorsFeed = async (newListing: CollectorItem) => {
     try {
-      const response = await fetch('/api/add-to-collectors-feed', { // Use the selected endpoint
+      const response = await fetch('/api/add-to-collectors-feed', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(newListing),
       });
-  
       if (response.ok) {
         const addedListing = await response.json();
         setCollectorsFeed((prevFeed) => [...prevFeed, addedListing]);
@@ -117,33 +106,47 @@ const LandingPage = () => {
       console.error('Error adding new listing:', error);
     }
   };
-  
 
   const updateMarketStatus = async (id: string, status: string, claimedBy: string) => {
-    try {
-      const response = await fetch('/api/update-market-status', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ id, marketStatus: status, claimedBy }),
-      });
-  
-      if (response.ok) {
-        const updatedFeed = collectorsFeed.map(item =>
-          item.id === id ? { ...item, marketStatus: status, claimedBy } : item
-        );
-        setCollectorsFeed(updatedFeed);
-      } else {
-        console.error('Failed to update market status');
-      }
-    } catch (error) {
-      console.error('Error updating market status:', error);
+    const item = collectorsFeed.find((item) => item.id === id);
+
+    // Update local state
+    const updatedFeed = collectorsFeed.map((item) =>
+      item.id === id ? { ...item, marketStatus: status, claimedBy } : item
+    );
+    setCollectorsFeed(updatedFeed);
+    localStorage.setItem("collectorsFeed", JSON.stringify(updatedFeed));
+
+    // Send the claim email notification
+    if (item) {
+        sendClaimEmailNotification(claimedBy, item.email, item.firstName, item.id);
     }
-  };
-  
-  
-  const sendClaimEmailNotification = async (claimedBy: string, recipientEmail: string, firstName: string, itemId: string) => {
+
+    // Make a backend request to update the database
+    try {
+        const response = await fetch('/api/update-market-status', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ id, marketStatus: status, claimedBy }),
+        });
+
+        if (!response.ok) {
+            console.error("Failed to update market status in the database");
+        }
+    } catch (error) {
+        console.error("Error updating market status:", error);
+    }
+};
+
+
+  const sendClaimEmailNotification = async (
+    claimedBy: string,
+    recipientEmail: string,
+    firstName: string,
+    itemId: string
+  ) => {
     try {
       const response = await fetch('/api/send-email', {
         method: 'POST',
@@ -157,7 +160,6 @@ const LandingPage = () => {
           itemId,
         }),
       });
-  
       if (response.ok) {
         console.log('Email sent successfully');
         alert(`An email has been sent to notify ${firstName} that their item has been claimed.`);
@@ -168,10 +170,7 @@ const LandingPage = () => {
       console.error('Error sending email:', error);
     }
   };
-  
-  
 
-  // Delete a listing and update localStorage
   const deleteFromMakersFeed = async (id: string) => {
     try {
       const response = await fetch('/api/makers-feed', {
@@ -179,11 +178,10 @@ const LandingPage = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ id }), // Use id as passed from MongoDB
+        body: JSON.stringify({ id }),
       });
-  
       if (response.ok) {
-        setMakersFeed((prevFeed) => prevFeed.filter(item => item.id !== id)); // Use `id` for state update
+        setMakersFeed((prevFeed) => prevFeed.filter(item => item.id !== id));
         console.log('Listing deleted successfully');
       } else {
         console.error('Failed to delete listing');
@@ -192,7 +190,6 @@ const LandingPage = () => {
       console.error('Error deleting listing:', error);
     }
   };
-  
 
   const deleteFromCollectorsFeed = async (id: string) => {
     try {
@@ -201,11 +198,10 @@ const LandingPage = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ id }), // Pass the MongoDB `id`
+        body: JSON.stringify({ id }),
       });
-  
       if (response.ok) {
-        setCollectorsFeed((prevFeed) => prevFeed.filter(item => item.id !== id)); // Use `id` for state update
+        setCollectorsFeed((prevFeed) => prevFeed.filter(item => item.id !== id));
         console.log('Listing deleted successfully');
       } else {
         console.error('Failed to delete listing');
@@ -215,16 +211,15 @@ const LandingPage = () => {
     }
   };
 
-  // Handle changes to the claim name for each collector's feed item
   const handleClaimFirstNameChange = (id: string, name: string) => {
     setCollectorsFeed(prevFeed =>
-      prevFeed.map(item => 
+      prevFeed.map(item =>
         item.id === id ? { ...item, firstNameClaimed: name } : item
       )
     );
   };
 
-  const closeModal = () => setSelectedForm(null); // Close form modal
+  const closeModal = () => setSelectedForm(null);
 
   return (
     <div className="min-h-screen bg-white text-black flex flex-col">
@@ -251,7 +246,7 @@ const LandingPage = () => {
           <a
             href="#"
             onClick={(e) => {
-              e.preventDefault(); // Prevent default anchor behavior
+              e.preventDefault();
               setSelectedForm("form1");
             }}
             className="text-[#1F5D53] font-bold text-xl underline hover:opacity-80"
@@ -265,13 +260,13 @@ const LandingPage = () => {
               <h3 className="text-xl font-bold">Makers Feed</h3>
               <div className="space-y-6 overflow-y-auto max-h-96">
                 {makersFeed.map((item) => (
-                    <div key={item.id} className="bg-white p-6 rounded-lg shadow-md">
+                  <div key={item.id} className="bg-white p-6 rounded-lg shadow-md">
                     <div className="flex justify-center mb-4">
-                    <img
-                      src={item.imageUrl}
-                      alt={item.description}
-                      className="w-full sm:w-80 md:w-96 lg:w-[400px] xl:w-[500px] h-auto object-cover rounded-lg"
-                    />
+                      <img
+                        src={item.imageUrl}
+                        alt={item.description}
+                        className="w-full sm:w-80 md:w-96 lg:w-[400px] xl:w-[500px] h-auto object-cover rounded-lg"
+                      />
                     </div>
                     <p><strong>Business Name:</strong> {item.businessName}</p>
                     <p><strong>First Name:</strong> {item.firstName}</p>
@@ -305,7 +300,7 @@ const LandingPage = () => {
           <a
             href="#"
             onClick={(e) => {
-              e.preventDefault(); // Prevent default anchor behavior
+              e.preventDefault();
               setSelectedForm("form2");
             }}
             className="text-[#1F5D53] font-bold text-xl underline hover:opacity-80"
@@ -321,11 +316,11 @@ const LandingPage = () => {
                 {collectorsFeed.map((item) => (
                   <div key={item.id} className="bg-white p-6 rounded-lg shadow-md">
                     <div className="flex justify-center mb-4">
-                    <img
-                      src={item.imageUrl}
-                      alt={item.description}
-                      className="w-full sm:w-80 md:w-96 lg:w-[400px] xl:w-[500px] h-auto object-cover rounded-lg"
-                    />
+                      <img
+                        src={item.imageUrl}
+                        alt={item.description}
+                        className="w-full sm:w-80 md:w-96 lg:w-[400px] xl:w-[500px] h-auto object-cover rounded-lg"
+                      />
                     </div>
                     <p><strong>First Name:</strong> {item.firstName}</p>
                     <p><strong>Email:</strong> {item.email}</p>
@@ -344,21 +339,15 @@ const LandingPage = () => {
                         <label className="block mb-2">
                           Accept this item! Enter your name to claim:
                         </label>
-
-                        {/* Input for first name when item is unclaimed */}
-                        {!item.claimedBy && (
-                          <div className="mb-4">
-                            <input
-                              type="text"
-                              placeholder="Your First Name"
-                              value={item.firstNameClaimed || ""}
-                              onChange={(e) => handleClaimFirstNameChange(item.id, e.target.value)}
-                              className="px-4 py-2 border border-gray-300 rounded-md"
-                            />
-                          </div>
-                        )}
-
-                        {/* Confirm button */}
+                        <div className="mb-4">
+                          <input
+                            type="text"
+                            placeholder="Your First Name"
+                            value={item.firstNameClaimed || ""}
+                            onChange={(e) => handleClaimFirstNameChange(item.id, e.target.value)}
+                            className="px-4 py-2 border border-gray-300 rounded-md"
+                          />
+                        </div>
                         <button
                           onClick={() => updateMarketStatus(item.id, "Accepted! Bring to the Market", item.firstNameClaimed || "")}
                           disabled={!item.firstNameClaimed}
