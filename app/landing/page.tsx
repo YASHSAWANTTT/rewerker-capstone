@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import FormOne from "../forms/FormOne";
 import FormTwo from "../forms/FormTwo";
+import { ObjectId } from "mongodb";
 
 const LandingPage = () => {
   const [selectedForm, setSelectedForm] = useState<string | null>(null);
@@ -84,7 +85,6 @@ const LandingPage = () => {
         setMakersFeed((prevFeed) => [...prevFeed, addedListing.listing]);
       } else if (response.status === 409) {
         console.error('Duplicate listing detected');
-        alert("Duplicate listing detected. This listing already exists.");
       } else {
         console.error('Failed to add new listing');
       }
@@ -174,25 +174,45 @@ const LandingPage = () => {
   // Delete a listing and update localStorage
   const deleteFromMakersFeed = async (id: string) => {
     try {
-      const response = await fetch(`/api/makersFeed/${id}`, {
+      const response = await fetch('/api/makers-feed', {
         method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id }), // Use id as passed from MongoDB
       });
   
       if (response.ok) {
-        setMakersFeed((prevFeed) => prevFeed.filter(item => item.id !== id));
+        setMakersFeed((prevFeed) => prevFeed.filter(item => item.id !== id)); // Use `id` for state update
+        console.log('Listing deleted successfully');
       } else {
-        console.error('Failed to delete item');
+        console.error('Failed to delete listing');
       }
     } catch (error) {
-      console.error('Error deleting item:', error);
+      console.error('Error deleting listing:', error);
     }
   };
   
 
-  const deleteFromCollectorsFeed = (id: string) => {
-    const updatedFeed = collectorsFeed.filter((item) => item.id !== id);
-    setCollectorsFeed(updatedFeed);
-    localStorage.setItem("collectorsFeed", JSON.stringify(updatedFeed));
+  const deleteFromCollectorsFeed = async (id: string) => {
+    try {
+      const response = await fetch('/api/collectors-feed', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id }), // Pass the MongoDB `id`
+      });
+  
+      if (response.ok) {
+        setCollectorsFeed((prevFeed) => prevFeed.filter(item => item.id !== id)); // Use `id` for state update
+        console.log('Listing deleted successfully');
+      } else {
+        console.error('Failed to delete listing');
+      }
+    } catch (error) {
+      console.error('Error deleting listing:', error);
+    }
   };
 
   // Handle changes to the claim name for each collector's feed item
