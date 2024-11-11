@@ -205,7 +205,7 @@ const LandingPage = () => {
 
   return (
     <div className="min-h-screen bg-white text-black flex flex-col">
-      <header className="bg-[rgba(240,191,34,0.5)] p-4">
+      <header className="bg-white p-4">
         <img src="/image.png" width="200" height="200" alt="logo" />
       </header>
       <div className="text-center p-6 bg-[rgba(240,191,34,0.5)] border-b border-gray-300">
