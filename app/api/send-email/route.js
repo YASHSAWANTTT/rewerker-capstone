@@ -18,7 +18,7 @@ export async function POST(req) {
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: recipientEmail,
-      subject: 'Material Claimed Notification',
+      subject: 'Trashy Market Notification: Your Item has been Claimed',
       text: `Hi ${firstName},\n\nYour item has been claimed by ${claimedBy}. Please bring your listed item to the Trashy Market on November 29th or November 30th to Mrs. Murphy's Irish Bistro on 3905 N Lincoln Ave.\n\nThank you for your contribution, see you there!\n\nBest,\nNowhere Collective`,
     };
 

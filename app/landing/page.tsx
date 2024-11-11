@@ -39,31 +39,67 @@ const LandingPage = () => {
 
   // Load feed data from localStorage on mount
   useEffect(() => {
-    const savedMakersFeed = localStorage.getItem("makersFeed");
-    const savedCollectorsFeed = localStorage.getItem("collectorsFeed");
-
-    if (savedMakersFeed) {
-      setMakersFeed(JSON.parse(savedMakersFeed));
-    }
-    if (savedCollectorsFeed) {
-      setCollectorsFeed(JSON.parse(savedCollectorsFeed));
-    }
+    const fetchData = async () => {
+      try {
+        const response = await fetch('/api/makers-feed');
+        const data = await response.json();
+        console.log('Fetched data:', data); // Check the data structure here
+        setMakersFeed(Array.isArray(data) ? data : data.makers || []);
+      } catch (error) {
+        console.error("Failed to fetch makers feed:", error);
+      }
+    };
+  
+    fetchData();
   }, []);
+  
 
   // Add listing with unique ID and save to localStorage
-  const addToMakersFeed = (newListing: any) => {
+  const addToMakersFeed = async (newListing: object) => {
     const listingWithId = { ...newListing, id: Date.now().toString() };
-    const updatedFeed = [...makersFeed, listingWithId];
-    setMakersFeed(updatedFeed);
-    localStorage.setItem("makersFeed", JSON.stringify(updatedFeed));
+    try {
+      const response = await fetch('/api/makers-feed', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(listingWithId),
+      });
+  
+      if (response.ok) {
+        const addedListing = await response.json();
+        setMakersFeed((prevFeed) => [...prevFeed, addedListing]);
+      } else {
+        console.error('Failed to add new listing');
+      }
+    } catch (error) {
+      console.error('Error adding new listing:', error);
+    }
   };
+  
 
-  const addToCollectorsFeed = (newListing: any) => {
+  const addToCollectorsFeed = async (newListing: object) => {
     const listingWithId = { ...newListing, id: Date.now().toString() };
-    const updatedFeed = [...collectorsFeed, listingWithId];
-    setCollectorsFeed(updatedFeed);
-    localStorage.setItem("collectorsFeed", JSON.stringify(updatedFeed));
+    try {
+      const response = await fetch('/api/collectors-feed', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(listingWithId),
+      });
+  
+      if (response.ok) {
+        const addedListing = await response.json();
+        setMakersFeed((prevFeed) => [...prevFeed, addedListing]);
+      } else {
+        console.error('Failed to add new listing');
+      }
+    } catch (error) {
+      console.error('Error adding new listing:', error);
+    }
   };
+  
 
   const updateMarketStatus = (id: string, status: string, claimedBy: string) => {
     const item = collectorsFeed.find((item) => item.id === id);
@@ -108,11 +144,22 @@ const LandingPage = () => {
   
 
   // Delete a listing and update localStorage
-  const deleteFromMakersFeed = (id: string) => {
-    const updatedFeed = makersFeed.filter((item) => item.id !== id);
-    setMakersFeed(updatedFeed);
-    localStorage.setItem("makersFeed", JSON.stringify(updatedFeed));
+  const deleteFromMakersFeed = async (id: string) => {
+    try {
+      const response = await fetch(`/api/makersFeed/${id}`, {
+        method: 'DELETE',
+      });
+  
+      if (response.ok) {
+        setMakersFeed((prevFeed) => prevFeed.filter(item => item.id !== id));
+      } else {
+        console.error('Failed to delete item');
+      }
+    } catch (error) {
+      console.error('Error deleting item:', error);
+    }
   };
+  
 
   const deleteFromCollectorsFeed = (id: string) => {
     const updatedFeed = collectorsFeed.filter((item) => item.id !== id);
@@ -134,12 +181,7 @@ const LandingPage = () => {
       <header className="bg-[rgba(240,191,34,0.5)] p-4">
         <img src="/image.png" width="200" height="200" alt="logo" />
       </header>
-
-      <div className="text-center p-6 bg-[rgba(240,191,34,0.5)] bg-white border-b border-gray-300"
-                  
-
->
-        
+      <div className="text-center p-6 bg-[rgba(240,191,34,0.5)] border-b border-gray-300">
         <h1 className="text-4xl font-semibold">Join our Trashy Market material collection!</h1>
         <p className="text-lg mt-2">These REmakers are accepting specific reusable materials at
            the Trashy Market (Nov 29-30). These materials will be transformed into one-of-a-kind 
