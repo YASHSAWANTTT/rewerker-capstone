@@ -1,4 +1,4 @@
-// pages/api/makers-feed.js
+// app/api/makers-feed.js
 import { MongoClient } from 'mongodb';
 
 const client = new MongoClient(process.env.MONGODB_URI, {
@@ -28,15 +28,16 @@ export async function GET(req) {
   }
 }
 
-export async function POST(req) {
-  try {
-    const db = await connectToDatabase();
-    const newListing = await req.json();
+// export async function POST(req) {
+//   try {
+//     const db = await connectToDatabase();
+//     const newListing = await req.json();
 
-    const result = await db.collection('makersFeed').insertOne(newListing);
-    return new Response(JSON.stringify({ _id: result.insertedId, ...newListing }), { status: 201 });
-  } catch (error) {
-    console.error("Error adding listing to MongoDB:", error);
-    return new Response(JSON.stringify({ message: "Failed to add listing" }), { status: 500 });
-  }
-}
+//     const result = await db.collection('makersFeed').insertOne(newListing);
+//     return new Response(JSON.stringify({ _id: result.insertedId, ...newListing }), { status: 201 });
+//   } catch (error) {
+//     console.error("Error adding listing to MongoDB:", error);
+//     return new Response(JSON.stringify({ message: "Failed to add listing" }), { status: 500 });
+//   }
+// }
+

@@ -94,19 +94,20 @@ const LandingPage = () => {
   
 
   const addToCollectorsFeed = async (newListing: object) => {
-    const listingWithId = { ...newListing, id: Date.now().toString() };
     try {
-      const response = await fetch('/api/collectors-feed', {
+      const response = await fetch('/api/add-to-collectors-feed', { // Use the selected endpoint
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(listingWithId),
+        body: JSON.stringify(newListing),
       });
   
       if (response.ok) {
         const addedListing = await response.json();
         setCollectorsFeed((prevFeed) => [...prevFeed, addedListing]);
+      } else if (response.status === 409) {
+        console.error('Duplicate listing detected');
       } else {
         console.error('Failed to add new listing');
       }

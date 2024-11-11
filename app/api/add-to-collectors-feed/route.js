@@ -6,6 +6,20 @@ export async function POST(req) {
     const db = await connectToDatabase();
     const { imageUrl, description, type, color, quantity, email, firstName } = await req.json();
 
+    // Check for existing listing with the same imageUrl, email, and createdAt within a short timeframe
+    const existingListing = await db.collection('collectorsFeed').findOne({
+      imageUrl,
+      email,
+      createdAt: { $gte: new Date(Date.now() - 10000) } // adjust time range as needed
+    });
+
+    if (existingListing) {
+      return new Response(JSON.stringify({ message: "Duplicate listing detected" }), {
+        status: 409, // 409 Conflict
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
     const newListing = {
       imageUrl,
       description,
@@ -18,9 +32,9 @@ export async function POST(req) {
     };
 
     const result = await db.collection('collectorsFeed').insertOne(newListing);
-    const insertedListing = await db.collection('collectorsFeed').findOne({ _id: result.insertedId });
+    newListing._id = result.insertedId;
 
-    return new Response(JSON.stringify({ message: 'Listing added successfully', listing: insertedListing }), {
+    return new Response(JSON.stringify({ message: 'Listing added successfully', listing: newListing }), {
       status: 201,
       headers: { 'Content-Type': 'application/json' },
     });
@@ -32,3 +46,4 @@ export async function POST(req) {
     });
   }
 }
+
