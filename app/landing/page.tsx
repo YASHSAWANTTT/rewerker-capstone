@@ -191,6 +191,8 @@ const LandingPage = () => {
     );
   };
 
+  const closeModal = () => setSelectedForm(null); // Close form modal
+
   return (
     <div className="min-h-screen bg-white text-black flex flex-col">
       <header className="bg-[rgba(240,191,34,0.5)] p-4">
@@ -214,20 +216,18 @@ const LandingPage = () => {
             Check in on the Collectors feed to claim your materials!
           </p>
           <a
-  href="#"
-  onClick={(e) => {
-    e.preventDefault(); // Prevent default anchor behavior
-    setSelectedForm("form1");
-  }}
-  className="text-[#1F5D53] font-bold text-xl underline hover:opacity-80"
->
-  Makers Form
-</a>
-
-
+            href="#"
+            onClick={(e) => {
+              e.preventDefault(); // Prevent default anchor behavior
+              setSelectedForm("form1");
+            }}
+            className="text-[#1F5D53] font-bold text-xl underline hover:opacity-80"
+          >
+            Makers Form
+          </a>
 
           <div className="mt-8">
-            {selectedForm === "form1" && <FormOne addToFeed={addToMakersFeed} />}
+            {selectedForm === "form1" && <FormOne addToFeed={addToMakersFeed} closeModal={closeModal} />}
             <div className="mt-6 p-6 max-w-4xl mx-auto shadow-md">
               <h3 className="text-xl font-bold">Makers Feed</h3>
               <div className="space-y-6 overflow-y-auto max-h-96">
@@ -270,31 +270,28 @@ const LandingPage = () => {
             (Mrs. Murphy's Irish Bistro 3905 N Lincoln Ave).
           </p>
           <a
-  href="#"
-  onClick={(e) => {
-    e.preventDefault(); // Prevent default anchor behavior
-    setSelectedForm("form2");
-  }}
-  className="text-[#1F5D53] font-bold text-xl underline hover:opacity-80"
->
-  Collectors Form
-</a>
-
+            href="#"
+            onClick={(e) => {
+              e.preventDefault(); // Prevent default anchor behavior
+              setSelectedForm("form2");
+            }}
+            className="text-[#1F5D53] font-bold text-xl underline hover:opacity-80"
+          >
+            Collectors Form
+          </a>
 
           <div className="mt-8">
-            {selectedForm === "form2" && <FormTwo addToFeed={addToCollectorsFeed} />}
+            {selectedForm === "form2" && <FormTwo addToFeed={addToCollectorsFeed} closeModal={closeModal} />}
             <div className="mt-6 p-6 max-w-4xl mx-auto shadow-md">
               <h3 className="text-xl font-bold">Collectors Feed</h3>
               <div className="space-y-6 overflow-y-auto max-h-96">
                 {collectorsFeed.map((item) => (
                   <div key={item.id} className="bg-white p-6 rounded-lg shadow-md">
-                    
                     <div className="flex justify-center mb-4">
                     <img
                       src={item.imageUrl}
                       alt={item.description}
                       className="w-full sm:w-80 md:w-96 lg:w-[400px] xl:w-[500px] h-auto object-cover rounded-lg"
-
                     />
                     </div>
                     <p><strong>First Name:</strong> {item.firstName}</p>

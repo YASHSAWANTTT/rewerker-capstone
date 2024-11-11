@@ -1,9 +1,7 @@
 "use client";
 import React, { useState } from "react";
-import { useRouter } from "next/navigation";
 
-const FormOne = ({ addToFeed }: { addToFeed: (item: any) => void }) => {
-
+const FormTwo = ({ addToFeed, closeModal }: { addToFeed: (item: any) => void; closeModal: () => void }) => {
   const [imageBase64, setImageBase64] = useState<string>("");
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [description, setDescription] = useState<string>("");
@@ -14,8 +12,6 @@ const FormOne = ({ addToFeed }: { addToFeed: (item: any) => void }) => {
   const [email, setEmail] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [file, setFile] = useState<File | null>(null);
-
-  const router = useRouter();
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -33,7 +29,6 @@ const FormOne = ({ addToFeed }: { addToFeed: (item: any) => void }) => {
       reader.onloadend = () => {
         const base64String = reader.result as string;
         setImageBase64(base64String);
-        setImageUrl(URL.createObjectURL(selectedFile));
       };
       reader.readAsDataURL(selectedFile);
     }
@@ -91,7 +86,6 @@ const FormOne = ({ addToFeed }: { addToFeed: (item: any) => void }) => {
         body: formData,
       });
   
-     
       if (!response.ok) {
         throw new Error('Failed to upload image');
       }
@@ -123,8 +117,6 @@ const FormOne = ({ addToFeed }: { addToFeed: (item: any) => void }) => {
       const feedResult = await feedResponse.json();
       addToFeed(feedResult.listing);
      
-      //addToFeed(newListing);
-  
       // Reset form
       setImageBase64("");
       setDescription("");
@@ -136,18 +128,17 @@ const FormOne = ({ addToFeed }: { addToFeed: (item: any) => void }) => {
       setImageUrl(null);
       setFile(null);
   
-      router.push("/landing");
+      closeModal();
     } catch (error) {
       console.error("Error uploading image:", error);
       alert("An error occurred while uploading the image.");
     }
   };
-  
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-lg relative">
       <button
-        onClick={() => router.push("/landing")}
+        onClick={closeModal}
         className="absolute top-2 right-2 text-gray-500 text-xl font-bold"
       >
         &times;
@@ -199,7 +190,6 @@ const FormOne = ({ addToFeed }: { addToFeed: (item: any) => void }) => {
             onClick={handleGPTGeneration}
             className="mt-2 text-white px-4 py-1 rounded-lg"
             style={{ backgroundColor: '#3856DE' }}
-
             disabled={loading}
           >
             {loading ? "Generating..." : "Generate Description with GPT"}
@@ -268,4 +258,4 @@ const FormOne = ({ addToFeed }: { addToFeed: (item: any) => void }) => {
   );
 };
 
-export default FormOne;
+export default FormTwo;

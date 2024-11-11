@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 
-const FormOne = ({ addToFeed }: { addToFeed: (item: any) => void }) => {
+const FormOne = ({ addToFeed, closeModal }: { addToFeed: (item: any) => void; closeModal: () => void }) => {
   const [imageBase64, setImageBase64] = useState<string>("");
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [description, setDescription] = useState<string>("");
@@ -130,7 +130,7 @@ const FormOne = ({ addToFeed }: { addToFeed: (item: any) => void }) => {
       setImageUrl(null);
       setFile(null);
 
-      router.push("/landing");
+      closeModal();
     } catch (error) {
       console.error("Error uploading image:", error);
       alert("An error occurred while uploading the image.");
@@ -140,7 +140,7 @@ const FormOne = ({ addToFeed }: { addToFeed: (item: any) => void }) => {
   return (
     <div className="bg-white p-6 rounded-lg shadow-lg relative">
       <button
-        onClick={() => router.push("/landing")}
+        onClick={closeModal}
         className="absolute top-2 right-2 text-gray-500 text-xl font-bold"
       >
         &times;
@@ -253,7 +253,6 @@ const FormOne = ({ addToFeed }: { addToFeed: (item: any) => void }) => {
             type="submit"
             className="w-full text-white py-2 rounded-lg"
             style={{ backgroundColor: '#1F5D53' }}
-
           >
             Submit Listing
           </button>
