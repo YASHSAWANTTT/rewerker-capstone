@@ -104,8 +104,21 @@ const FormOne = ({ addToFeed }: { addToFeed: (item: any) => void }) => {
         firstName,
       };
 
-      addToFeed(newListing);
-
+      const feedResponse = await fetch('/api/add-to-makers-feed', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newListing),
+      });
+  
+      if (!feedResponse.ok) {
+        throw new Error('Failed to add listing to the feed');
+      }
+  
+      const feedResult = await feedResponse.json();
+      addToFeed(feedResult.listing);
+     
       // Reset form
       setImageBase64("");
       setDescription("");

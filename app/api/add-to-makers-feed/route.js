@@ -1,11 +1,11 @@
-// pages/api/add-to-makers-feed.js
+// app/api/add-to-makers-feed/route.js
 import { connectToDatabase } from '../../../utils/mongodb';
 
-export default async function handler(req, res) {
+export async function POST(req) {
   if (req.method === 'POST') {
     try {
       const db = await connectToDatabase();
-      const { imageUrl, description, type, color, quantity, businessName, firstName } = req.body;
+      const { imageUrl, description, type, color, quantity, email, firstName } = await req.json();
 
       const newListing = {
         imageUrl,
@@ -13,7 +13,7 @@ export default async function handler(req, res) {
         type,
         color,
         quantity,
-        businessName,
+        email,
         firstName,
         createdAt: new Date(),
       };
@@ -21,12 +21,21 @@ export default async function handler(req, res) {
       const result = await db.collection('makersFeed').insertOne(newListing);
       const insertedListing = await db.collection('makersFeed').findOne({ _id: result.insertedId });
 
-      res.status(201).json({ message: 'Listing added successfully', listing: insertedListing });
+      return new Response(JSON.stringify({ message: 'Listing added successfully', listing: insertedListing }), {
+        status: 201,
+        headers: { 'Content-Type': 'application/json' },
+      });
     } catch (error) {
       console.error("Error inserting listing into MongoDB:", error);
-      res.status(500).json({ message: "Failed to insert listing into MongoDB" });
+      return new Response(JSON.stringify({ message: "Failed to insert listing into MongoDB" }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      });
     }
   } else {
-    res.status(405).json({ message: 'Method Not Allowed' });
+    return new Response(JSON.stringify({ message: 'Method Not Allowed' }), {
+      status: 405,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 }

@@ -52,6 +52,21 @@ const LandingPage = () => {
   
     fetchData();
   }, []);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await fetch('/api/collectors-feed');
+        const data = await response.json();
+        console.log('Fetched data:', data); // Check the data structure here
+        setCollectorsFeed(Array.isArray(data) ? data : data.collectors || []);
+      } catch (error) {
+        console.error("Failed to fetch makers feed:", error);
+      }
+    };
+  
+    fetchData();
+  }, []);
   
 
   // Add listing with unique ID and save to localStorage
@@ -91,7 +106,7 @@ const LandingPage = () => {
   
       if (response.ok) {
         const addedListing = await response.json();
-        setMakersFeed((prevFeed) => [...prevFeed, addedListing]);
+        setCollectorsFeed((prevFeed) => [...prevFeed, addedListing]);
       } else {
         console.error('Failed to add new listing');
       }

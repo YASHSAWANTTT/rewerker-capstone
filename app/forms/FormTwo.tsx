@@ -91,9 +91,9 @@ const FormOne = ({ addToFeed }: { addToFeed: (item: any) => void }) => {
         body: formData,
       });
   
+     
       if (!response.ok) {
-        const errorData = await response.json(); // Get error message if available
-        throw new Error(errorData.message || 'Failed to upload image');
+        throw new Error('Failed to upload image');
       }
   
       const result = await response.json();
