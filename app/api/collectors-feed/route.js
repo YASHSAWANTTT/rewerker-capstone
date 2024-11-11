@@ -19,7 +19,7 @@ const connectToDatabase = async () => {
 export async function GET(req) {
   try {
     const db = await connectToDatabase();
-    const makersFeed = await db.collection('collectorsFeed').find({}).toArray();
+    const collectorsFeed = await db.collection('collectorsFeed').find({}).toArray();
 
     return new Response(JSON.stringify(collectorsFeed), { status: 200 });
   } catch (error) {
@@ -33,7 +33,7 @@ export async function POST(req) {
     const db = await connectToDatabase();
     const newListing = await req.json();
 
-    const result = await db.collection('makersFeed').insertOne(newListing);
+    const result = await db.collection('collectorsFeed').insertOne(newListing);
     return new Response(JSON.stringify({ _id: result.insertedId, ...newListing }), { status: 201 });
   } catch (error) {
     console.error("Error adding listing to MongoDB:", error);
