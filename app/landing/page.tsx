@@ -116,19 +116,29 @@ const LandingPage = () => {
   };
   
 
-  const updateMarketStatus = (id: string, status: string, claimedBy: string) => {
-    const item = collectorsFeed.find((item) => item.id === id);
-    
-    const updatedFeed = collectorsFeed.map((item) =>
-      item.id === id ? { ...item, marketStatus: status, claimedBy } : item
-    );
-    setCollectorsFeed(updatedFeed);
-    localStorage.setItem("collectorsFeed", JSON.stringify(updatedFeed));
+  const updateMarketStatus = async (id: string, status: string, claimedBy: string) => {
+    try {
+      const response = await fetch('/api/update-market-status', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id, marketStatus: status, claimedBy }),
+      });
   
-    if (item) {
-      sendClaimEmailNotification(claimedBy, item.email, item.firstName, item.id);
+      if (response.ok) {
+        const updatedFeed = collectorsFeed.map(item =>
+          item.id === id ? { ...item, marketStatus: status, claimedBy } : item
+        );
+        setCollectorsFeed(updatedFeed);
+      } else {
+        console.error('Failed to update market status');
+      }
+    } catch (error) {
+      console.error('Error updating market status:', error);
     }
   };
+  
   
   const sendClaimEmailNotification = async (claimedBy: string, recipientEmail: string, firstName: string, itemId: string) => {
     try {
