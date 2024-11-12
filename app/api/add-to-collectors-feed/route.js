@@ -3,7 +3,7 @@ import { connectToDatabase } from '../../../utils/mongodb';
 
 export async function POST(req) {
   try {
-    const db = await connectToDatabase();
+    const { db } = await connectToDatabase();
     const { imageUrl, description, type, color, quantity, email, firstName } = await req.json();
 
     // Check for existing listing with the same imageUrl, email, and createdAt within a short timeframe
@@ -32,18 +32,18 @@ export async function POST(req) {
     };
 
     const result = await db.collection('collectorsFeed').insertOne(newListing);
-    newListing._id = result.insertedId;
 
-    return new Response(JSON.stringify({ message: 'Listing added successfully', listing: newListing }), {
+    return new Response(JSON.stringify({ success: true, listing: { ...newListing, _id: result.insertedId } }), {
       status: 201,
       headers: { 'Content-Type': 'application/json' },
     });
   } catch (error) {
     console.error("Error inserting listing into MongoDB:", error);
-    return new Response(JSON.stringify({ message: "Failed to insert listing into MongoDB" }), {
+    return new Response(JSON.stringify({ success: false, error: "Internal server error" }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
     });
   }
 }
+
 
