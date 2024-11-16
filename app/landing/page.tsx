@@ -33,7 +33,17 @@ const LandingPage: React.FC = () => {
   const [selectedForm, setSelectedForm] = useState<string | null>(null);
   const [makersFeed, setMakersFeed] = useState<MakerItem[]>([]);
   const [collectorsFeed, setCollectorsFeed] = useState<CollectorItem[]>([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [accessCode, setAccessCode] = useState("");
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false); // Loading state for deletion
+  const [itemIdToDelete, setItemIdToDelete] = useState<{ feedType: 'makers' | 'collectors'; id: string } | null>(null);
+
+  const [deletionSuccess, setDeletionSuccess] = useState(false); 
+
   const router = useRouter();
+  
+  const correctAccessCode = "57833";
 
   // Load makers feed
   useEffect(() => {
@@ -191,6 +201,7 @@ const LandingPage: React.FC = () => {
     }
   };
 
+
   const deleteFromCollectorsFeed = async (id: string) => {
     try {
       const response = await fetch('/api/collectors-feed', {
@@ -211,6 +222,61 @@ const LandingPage: React.FC = () => {
     }
   };
 
+  const closePopUp = () => {
+    if (isModalOpen) {
+    setIsModalOpen(false);
+    setAccessCode("");
+    setError("");
+    setDeletionSuccess(false);
+    setItemIdToDelete(null); // Reset on close
+    }
+  };
+
+
+
+  const handleConfirmDelete = async () => {
+
+    console.log("Confirm delete triggered for ID:", itemIdToDelete?.id); // Add log here
+
+    if (accessCode === correctAccessCode && itemIdToDelete) {
+      setIsLoading(true);
+      try {
+
+        console.log("Deleting item with ID:", itemIdToDelete.id, "from feed:", itemIdToDelete.feedType);
+
+        if (itemIdToDelete.feedType === 'makers') {
+
+          await deleteFromMakersFeed(itemIdToDelete.id);
+        } else if (itemIdToDelete.feedType === 'collectors') {
+          await deleteFromCollectorsFeed(itemIdToDelete.id);
+        }
+        setDeletionSuccess(true);
+        setTimeout(() => closePopUp(), 1000);
+      } catch (error) {
+        console.error("Error deleting item:", error);
+        setError("Failed to delete item. Please try again.");
+      } finally {
+        setIsLoading(false);
+      }
+    } else {
+      setError("Invalid access code. Please try again.");
+      setAccessCode("");  // Reset access code on failure
+    }
+  };
+
+  const handleDeleteClickMakers = (id: string) => {
+    console.log("Deleting item with ID:", id);  // Add this log to check if the function is triggered
+    console.log("Setting itemIdToDelete:", { feedType: 'makers', id });
+    setItemIdToDelete({ feedType: 'makers', id });
+    setIsModalOpen(true);
+  };
+
+  const handleDeleteClickCollectors = (id: string) => {
+    setItemIdToDelete({ feedType: 'collectors', id });
+    setIsModalOpen(true);
+  };
+
+
   const handleClaimFirstNameChange = (id: string, name: string) => {
     setCollectorsFeed(prevFeed =>
       prevFeed.map(item =>
@@ -227,32 +293,31 @@ const LandingPage: React.FC = () => {
         <img src="/image.png" width="200" height="200" alt="logo" />
       </header>
       <div className="text-center p-6 bg-[rgba(240,191,34,0.5)] border-b border-gray-300">
-        <h1 className="text-4xl font-semibold">Join our Trashy Market material collection!</h1>
-        <p className="text-lg mt-2">These REmakers are accepting specific reusable materials at
-           the Trashy Market (Nov 29-30). These materials will be transformed into one-of-a-kind 
-           goods. Attendees are invited to collect and donate reusable materials to the REmakers 
-           at the Trashy Market. 
+        <h1 className="text-4xl font-semibold">Join the Junky Jamboree with Our Material Collection!</h1>
+        <p className="text-lg mt-2">Our Trash Smashing artisans are accepting specific reusable materials 
+          at the Trashy Holiday Market (Nov 29-30). Accepted Materials will be transformed into future 
+          one-of-a-kind goods. Attendees are invited to gather and give requested materials to the Makers 
+          at the Trashy Market. This material matching site is a new experiment for us, so if you run into 
+          any technical issues or have feedback, please contact Katy (at) nowhere-collective.com.
         </p>
       </div>
 
       <div className="flex flex-grow">
         {/* Makers Side */}
         <div className="w-1/2 p-8 bg-white border-r border-gray-300">
-          <h2 className="text-2xl font-bold mb-4">REMAKER: Material Requests</h2>
+          <h2 className="text-2xl font-bold mb-4">Trashy Makers: Material Requests  </h2>
           <p className="text-base text-gray-800 mb-6">
-            If you are a REmaker accepting materials at the Trashy Market, fill out the form below to post your material request.
-            Check in on the Collectors feed to claim your materials!
+          If you are a Trashy Maker, fill out the form below to post your material requests. 
+          Check the Offers feed by November 28 to claim your materials and notify the Giver 
+          that you will accept their materials!
           </p>
-          <a
-            href="#"
-            onClick={(e) => {
-              e.preventDefault();
-              setSelectedForm("form1");
-            }}
-            className="text-[#1F5D53] font-bold text-xl underline hover:opacity-80"
-          >
-            Makers Form
-          </a>
+          <button
+          onClick={(e) => {
+                e.preventDefault();
+                setSelectedForm("form1");
+             }}
+            className="bg-[#FC4F31] text-white font-bold text-xl hover:opacity-80 px-6 py-3 rounded-md border-none cursor-pointer"
+              >Makers Form</button>
 
           <div className="mt-8">
             {selectedForm === "form1" && <FormOne addToFeed={addToMakersFeed} closeModal={closeModal} />}
@@ -275,11 +340,10 @@ const LandingPage: React.FC = () => {
                     <p><strong>Color:</strong> {item.color}</p>
                     <p><strong>Quantity:</strong> {item.quantity}</p>
                     <button
-                      onClick={() => deleteFromMakersFeed(item.id)}
-                      className="mt-2 bg-red-500 text-white px-4 py-1 rounded-lg hover:bg-red-600 transition"
-                    >
-                      Delete Listing
-                    </button>
+                          onClick={() => handleDeleteClickMakers(item.id)}
+                          className="mt-2 bg-red-500 text-white px-3 py-0.5 rounded-lg hover:bg-red-600 transition"                        >
+                          Delete Listing
+                        </button>
                   </div>
                 ))}
               </div>
@@ -289,24 +353,24 @@ const LandingPage: React.FC = () => {
 
         {/* Collectors Side */}
         <div className="w-1/2 p-8 bg-white">
-          <h2 className="text-2xl font-bold mb-4">COLLECTOR: Material Offers</h2>
+          <h2 className="text-2xl font-bold mb-4">Gather & Give: Material Offerss</h2>
           <p className="text-base text-gray-800 mb-6">
-            Scroll through the REmaker material requests to see if you have materials that match. 
-            If you have a potential material match, complete the form at the top of the COLLECTOR 
-            feed. The REmaker will approve or reject your match by November 28. If your material is
-            approved, bring it to the REmaker at the Trashy Market 
-            (Mrs. Murphy's Irish Bistro 3905 N Lincoln Ave).
+          Attention Attendees of Trashy Holiday! Scroll through the Trashy Makers' 
+          material requests (on the left). If you potentially have material that 
+          match their request, complete the form below. If you have materials that
+           aren't a match but might be intriguing, feel free to post too. By November 
+           28th, the Trashy Makers will claim their preferred materials. 
+           If your material is claimed, you will receive an email inviting you to 
+           bring it to the Maker at the Trashy Market (Mrs. Murphy's Irish Bistro 3905 N Lincoln Ave).
           </p>
-          <a
-            href="#"
-            onClick={(e) => {
-              e.preventDefault();
-              setSelectedForm("form2");
-            }}
-            className="text-[#1F5D53] font-bold text-xl underline hover:opacity-80"
-          >
-            Collectors Form
-          </a>
+          <button
+    onClick={(e) => {
+        e.preventDefault();
+        setSelectedForm("form2");
+    }}
+    className="bg-[#FC4F31] text-white font-bold text-xl hover:opacity-80 px-6 py-3 rounded-md border-none cursor-pointer">
+    Collectors Form
+</button>
 
           <div className="mt-8">
             {selectedForm === "form2" && <FormTwo addToFeed={addToCollectorsFeed} closeModal={closeModal} />}
@@ -323,7 +387,6 @@ const LandingPage: React.FC = () => {
                       />
                     </div>
                     <p><strong>First Name:</strong> {item.firstName}</p>
-                    <p><strong>Email:</strong> {item.email}</p>
                     <p><strong>Description:</strong> {item.description}</p>
                     <p><strong>Type:</strong> {item.type}</p>
                     <p><strong>Color:</strong> {item.color}</p>
@@ -337,12 +400,12 @@ const LandingPage: React.FC = () => {
                     ) : (
                       <div className="mt-2">
                         <label className="block mb-2">
-                          Accept this item! Enter your name to claim:
+                          Accept this item! Enter your Business Name to claim:
                         </label>
                         <div className="mb-4">
                           <input
                             type="text"
-                            placeholder="Your First Name"
+                            placeholder="Business Name"
                             value={item.firstNameClaimed || ""}
                             onChange={(e) => handleClaimFirstNameChange(item.id, e.target.value)}
                             className="px-4 py-2 border border-gray-300 rounded-md"
@@ -358,12 +421,67 @@ const LandingPage: React.FC = () => {
                         </button>
                       </div>
                     )}
-                    <button
-                      onClick={() => deleteFromCollectorsFeed(item.id)}
-                      className="mt-2 bg-red-500 text-white px-4 py-1 rounded-lg hover:bg-red-600 transition"
-                    >
-                      Delete Listing
-                    </button>
+                  <button
+                          onClick={() => handleDeleteClickCollectors(item.id)}
+                          className="mt-2 bg-red-500 text-white px-3 py-0.5 rounded-lg hover:bg-red-600 transition"                        >
+                          Delete Listing
+                        </button>
+                       
+{/* Modal */}
+{isModalOpen && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <div className="fixed inset-0 bg-gray-500 bg-opacity-50 flex justify-center items-center">
+              <div className="bg-white p-6 rounded-lg shadow-lg">
+                <h2 className="text-xl font-semibold">Confirm Deletion</h2>
+                <h3 className="text-xl font-semibold mb-4">Enter Access Code</h3>
+                <input
+                  type="text"
+                  value={accessCode}
+                  onChange={(e) => setAccessCode(e.target.value)}
+                  placeholder="Enter access code"
+                  className="mb-4 px-4 py-2 border rounded-lg w-full"
+                />
+                {error && <p className="text-red-500 text-sm">{error}</p>}
+
+                {/* Show loading spinner if it's processing */}
+                {isLoading && (
+                  <div className="flex justify-center">
+                    <div className="spinner-border animate-spin w-8 h-8 border-4 border-blue-500 rounded-full"></div>
+                  </div>
+                )}
+
+                {/* Show success message after successful deletion */}
+                {deletionSuccess && (
+                  <div className="text-green-500 font-medium mb-4">
+                    Item deleted successfully!
+                  </div>
+                )}
+
+                <div className="mt-4 flex justify-end">
+                  <button
+                    onClick={closePopUp}
+                    className="bg-gray-300 text-black px-4 py-2 rounded-md mr-2"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleConfirmDelete}
+                    className="bg-red-500 text-white px-4 py-2 rounded-md"
+                    disabled={isLoading} // Disable button when loading
+                  >
+                    Confirm Delete
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+
+
+
                   </div>
                 ))}
               </div>

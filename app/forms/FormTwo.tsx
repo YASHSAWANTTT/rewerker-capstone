@@ -233,7 +233,7 @@ const FormTwo = ({ addToFeed, closeModal }: { addToFeed: (item: any) => void; cl
         </div>
 
         <div>
-          <label className="block text-lg font-medium">Email</label>
+          <label className="block text-lg font-medium">Email (this will only ever be used to confirm whether your material is accepted and is not displayed)</label>
           <input
             type="email"
             value={email}
