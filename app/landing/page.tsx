@@ -302,7 +302,7 @@ const LandingPage: React.FC = () => {
         </p>
       </div>
 
-      <div className="flex flex-grow">
+      <div className="flex flex-grow flex-row">
         {/* Makers Side */}
         <div className="w-1/2 p-8 bg-white border-r border-gray-300">
           <h2 className="text-2xl font-bold mb-4">Trashy Makers: Material Requests  </h2>
@@ -350,6 +350,7 @@ const LandingPage: React.FC = () => {
             </div>
           </div>
         </div>
+       
 
         {/* Collectors Side */}
         <div className="w-1/2 p-8 bg-white">
@@ -364,13 +365,13 @@ const LandingPage: React.FC = () => {
            bring it to the Maker at the Trashy Market (Mrs. Murphy's Irish Bistro 3905 N Lincoln Ave).
           </p>
           <button
-    onClick={(e) => {
-        e.preventDefault();
-        setSelectedForm("form2");
-    }}
-    className="bg-[#FC4F31] text-white font-bold text-xl hover:opacity-80 px-6 py-3 rounded-md border-none cursor-pointer">
-    Collectors Form
-</button>
+              onClick={(e) => {
+              e.preventDefault();
+              setSelectedForm("form2");
+              }}
+          className="bg-[#FC4F31] text-white font-bold text-xl hover:opacity-80 px-6 py-3 rounded-md border-none cursor-pointer">
+          Collectors Form
+          </button>
 
           <div className="mt-8">
             {selectedForm === "form2" && <FormTwo addToFeed={addToCollectorsFeed} closeModal={closeModal} />}
@@ -426,71 +427,66 @@ const LandingPage: React.FC = () => {
                           className="mt-2 bg-red-500 text-white px-3 py-0.5 rounded-lg hover:bg-red-600 transition"                        >
                           Delete Listing
                         </button>
-                       
-{/* Modal */}
-{isModalOpen && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <div className="fixed inset-0 bg-gray-500 bg-opacity-50 flex justify-center items-center">
-              <div className="bg-white p-6 rounded-lg shadow-lg">
-                <h2 className="text-xl font-semibold">Confirm Deletion</h2>
-                <h3 className="text-xl font-semibold mb-4">Enter Access Code</h3>
-                <input
-                  type="text"
-                  value={accessCode}
-                  onChange={(e) => setAccessCode(e.target.value)}
-                  placeholder="Enter access code"
-                  className="mb-4 px-4 py-2 border rounded-lg w-full"
-                />
-                {error && <p className="text-red-500 text-sm">{error}</p>}
-
-                {/* Show loading spinner if it's processing */}
-                {isLoading && (
-                  <div className="flex justify-center">
-                    <div className="spinner-border animate-spin w-8 h-8 border-4 border-blue-500 rounded-full"></div>
-                  </div>
-                )}
-
-                {/* Show success message after successful deletion */}
-                {deletionSuccess && (
-                  <div className="text-green-500 font-medium mb-4">
-                    Item deleted successfully!
-                  </div>
-                )}
-
-                <div className="mt-4 flex justify-end">
-                  <button
-                    onClick={closePopUp}
-                    className="bg-gray-300 text-black px-4 py-2 rounded-md mr-2"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleConfirmDelete}
-                    className="bg-red-500 text-white px-4 py-2 rounded-md"
-                    disabled={isLoading} // Disable button when loading
-                  >
-                    Confirm Delete
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-
-
-
-                  </div>
-                ))}
+                        </div>
+                             
+                            ))}
               </div>
             </div>
           </div>
         </div>
       </div>
+  
+    {/* Modal */}
+    {isModalOpen && (
+      <div className="fixed inset-0 bg-gray-500 bg-opacity-50 flex justify-center items-center z-50">
+        <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+          <h2 className="text-xl font-semibold">Confirm Deletion</h2>
+          <h3 className="text-xl font-semibold mb-4">Enter Access Code</h3>
+          <input
+            type="text"
+            value={accessCode}
+            onChange={(e) => setAccessCode(e.target.value)}
+            placeholder="Enter access code"
+            className="mb-4 px-4 py-2 border rounded-lg w-full"
+          />
+          {error && <p className="text-red-500 text-sm">{error}</p>}
+
+          {/* Show loading spinner if it's processing */}
+          {isLoading && (
+            <div className="flex justify-center">
+              <div className="spinner-border animate-spin w-8 h-8 border-4 border-blue-500 rounded-full"></div>
+            </div>
+          )}
+
+          {/* Show success message after successful deletion */}
+          {deletionSuccess && (
+            <div className="text-green-500 font-medium mb-4">
+              Item deleted successfully!
+            </div>
+          )}
+
+          <div className="mt-4 flex justify-end">
+            <button
+              onClick={closePopUp}
+              className="bg-gray-300 text-black px-4 py-2 rounded-md mr-2"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleConfirmDelete}
+              className="bg-red-500 text-white px-4 py-2 rounded-md"
+              disabled={isLoading} // Disable button when loading
+            >
+              Confirm Delete
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
     </div>
-  );
-};
+  
+);
+
+}
 
 export default LandingPage;
