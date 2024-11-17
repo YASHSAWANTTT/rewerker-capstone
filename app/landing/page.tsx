@@ -4,110 +4,229 @@ import { useRouter } from "next/navigation";
 import FormOne from "../forms/FormOne";
 import FormTwo from "../forms/FormTwo";
 
-const LandingPage = () => {
-  const [selectedForm, setSelectedForm] = useState<string | null>(null);
-  const [makersFeed, setMakersFeed] = useState< 
-    { 
-      id: string; 
-      imageUrl: string; 
-      description: string; 
-      type: string; 
-      color: string; 
-      quantity: string; 
-      firstName: string; 
-      businessName: string; 
-    }[] 
-  >([]);
-  
-  const [collectorsFeed, setCollectorsFeed] = useState< 
-    { 
-      id: string; 
-      imageUrl: string; 
-      description: string; 
-      type: string; 
-      color: string; 
-      quantity: string; 
-      firstName: string; 
-      email: string; 
-      marketStatus: string; 
-      claimedBy: string | null; 
-      firstNameClaimed?: string; 
-    }[] 
-  >([]);
+type MakerItem = {
+  id: string;
+  imageUrl: string;
+  description: string;
+  type: string;
+  color: string;
+  quantity: string;
+  firstName: string;
+  businessName: string;
+};
 
+type CollectorItem = {
+  id: string;
+  imageUrl: string;
+  description: string;
+  type: string;
+  color: string;
+  quantity: string;
+  firstName: string;
+  email: string;
+  marketStatus: string;
+  claimedBy: string | null;
+  firstNameClaimed?: string;
+};
+
+const LandingPage: React.FC = () => {
+  const [selectedForm, setSelectedForm] = useState<string | null>(null);
+  const [makersFeed, setMakersFeed] = useState<MakerItem[]>([]);
+  const [collectorsFeed, setCollectorsFeed] = useState<CollectorItem[]>([]);
   const router = useRouter();
 
-  // Load feed data from localStorage on mount
+  // Load makers feed
   useEffect(() => {
-    const savedMakersFeed = localStorage.getItem("makersFeed");
-    const savedCollectorsFeed = localStorage.getItem("collectorsFeed");
-
-    if (savedMakersFeed) {
-      setMakersFeed(JSON.parse(savedMakersFeed));
-    }
-    if (savedCollectorsFeed) {
-      setCollectorsFeed(JSON.parse(savedCollectorsFeed));
-    }
+    const fetchData = async () => {
+      try {
+        const response = await fetch('/api/makers-feed');
+        const data = await response.json();
+        setMakersFeed(Array.isArray(data) ? data : data.makers || []);
+      } catch (error) {
+        console.error("Failed to fetch makers feed:", error);
+      }
+    };
+    fetchData();
   }, []);
 
-  // Add listing with unique ID and save to localStorage
-  const addToMakersFeed = (newListing: any) => {
-    const listingWithId = { ...newListing, id: Date.now().toString() };
-    const updatedFeed = [...makersFeed, listingWithId];
-    setMakersFeed(updatedFeed);
-    localStorage.setItem("makersFeed", JSON.stringify(updatedFeed));
+  // Load collectors feed
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await fetch('/api/collectors-feed');
+        const data = await response.json();
+        setCollectorsFeed(Array.isArray(data) ? data : data.collectors || []);
+      } catch (error) {
+        console.error("Failed to fetch collectors feed:", error);
+      }
+    };
+    fetchData();
+  }, []);
+
+  const addToMakersFeed = async (newListing: MakerItem) => {
+    try {
+      const response = await fetch('/api/add-to-makers-feed', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newListing),
+      });
+      if (response.ok) {
+        const addedListing = await response.json();
+        setMakersFeed((prevFeed) => [...prevFeed, addedListing.listing]);
+      } else if (response.status === 409) {
+        console.error('Duplicate listing detected');
+      } else {
+        console.error('Failed to add new listing');
+      }
+    } catch (error) {
+      console.error('Error adding new listing:', error);
+    }
   };
 
-  const addToCollectorsFeed = (newListing: any) => {
-    const listingWithId = { ...newListing, id: Date.now().toString() };
-    const updatedFeed = [...collectorsFeed, listingWithId];
-    setCollectorsFeed(updatedFeed);
-    localStorage.setItem("collectorsFeed", JSON.stringify(updatedFeed));
+  const addToCollectorsFeed = async (newListing: CollectorItem) => {
+    try {
+      const response = await fetch('/api/add-to-collectors-feed', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newListing),
+      });
+      if (response.ok) {
+        const addedListing = await response.json();
+        setCollectorsFeed((prevFeed) => [...prevFeed, addedListing]);
+      } else if (response.status === 409) {
+        console.error('Duplicate listing detected');
+      } else {
+        console.error('Failed to add new listing');
+      }
+    } catch (error) {
+      console.error('Error adding new listing:', error);
+    }
   };
 
-  const updateMarketStatus = (id: string, status: string, claimedBy: string) => {
-    const updatedFeed = collectorsFeed.map(item =>
-      item.id === id ? { ...item, marketStatus: status, claimedBy: claimedBy } : item
+  const updateMarketStatus = async (id: string, status: string, claimedBy: string) => {
+    const item = collectorsFeed.find((item) => item.id === id);
+
+    // Update local state
+    const updatedFeed = collectorsFeed.map((item) =>
+      item.id === id ? { ...item, marketStatus: status, claimedBy } : item
     );
     setCollectorsFeed(updatedFeed);
     localStorage.setItem("collectorsFeed", JSON.stringify(updatedFeed));
-    sendClaimEmailNotification(claimedBy, id);
+
+    // Send the claim email notification
+    if (item) {
+        sendClaimEmailNotification(claimedBy, item.email, item.firstName, item.id);
+    }
+
+    // Make a backend request to update the database
+    try {
+        const response = await fetch('/api/update-market-status', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ id, marketStatus: status, claimedBy }),
+        });
+
+        if (!response.ok) {
+            console.error("Failed to update market status in the database");
+        }
+    } catch (error) {
+        console.error("Error updating market status:", error);
+    }
+};
+
+
+  const sendClaimEmailNotification = async (
+    claimedBy: string,
+    recipientEmail: string,
+    firstName: string,
+    itemId: string
+  ) => {
+    try {
+      const response = await fetch('/api/send-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          recipientEmail,
+          claimedBy,
+          firstName,
+          itemId,
+        }),
+      });
+      if (response.ok) {
+        console.log('Email sent successfully');
+        alert(`An email has been sent to notify ${firstName} that their item has been claimed.`);
+      } else {
+        console.error('Failed to send email');
+      }
+    } catch (error) {
+      console.error('Error sending email:', error);
+    }
   };
 
-  const sendClaimEmailNotification = (claimedBy: string, itemId: string) => {
-    console.log(`Email sent: The item with ID ${itemId} has been claimed by ${claimedBy}.`);
-    alert(`An email has been sent to notify ${claimedBy} that their item has been claimed.`);
+  const deleteFromMakersFeed = async (id: string) => {
+    try {
+      const response = await fetch('/api/makers-feed', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id }),
+      });
+      if (response.ok) {
+        setMakersFeed((prevFeed) => prevFeed.filter(item => item.id !== id));
+        console.log('Listing deleted successfully');
+      } else {
+        console.error('Failed to delete listing');
+      }
+    } catch (error) {
+      console.error('Error deleting listing:', error);
+    }
   };
 
-  // Delete a listing and update localStorage
-  const deleteFromMakersFeed = (id: string) => {
-    const updatedFeed = makersFeed.filter((item) => item.id !== id);
-    setMakersFeed(updatedFeed);
-    localStorage.setItem("makersFeed", JSON.stringify(updatedFeed));
+  const deleteFromCollectorsFeed = async (id: string) => {
+    try {
+      const response = await fetch('/api/collectors-feed', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ id }),
+      });
+      if (response.ok) {
+        setCollectorsFeed((prevFeed) => prevFeed.filter(item => item.id !== id));
+        console.log('Listing deleted successfully');
+      } else {
+        console.error('Failed to delete listing');
+      }
+    } catch (error) {
+      console.error('Error deleting listing:', error);
+    }
   };
 
-  const deleteFromCollectorsFeed = (id: string) => {
-    const updatedFeed = collectorsFeed.filter((item) => item.id !== id);
-    setCollectorsFeed(updatedFeed);
-    localStorage.setItem("collectorsFeed", JSON.stringify(updatedFeed));
-  };
-
-  // Handle changes to the claim name for each collector's feed item
   const handleClaimFirstNameChange = (id: string, name: string) => {
     setCollectorsFeed(prevFeed =>
-      prevFeed.map(item => 
+      prevFeed.map(item =>
         item.id === id ? { ...item, firstNameClaimed: name } : item
       )
     );
   };
 
+  const closeModal = () => setSelectedForm(null);
+
   return (
-    <div className="min-h-screen bg-gray-100 text-black flex flex-col">
-      <header className="bg-white shadow-sm p-4">
+    <div className="min-h-screen bg-white text-black flex flex-col">
+      <header className="bg-white p-4">
         <img src="/image.png" width="200" height="200" alt="logo" />
       </header>
-
-      <div className="text-center p-6 bg-white border-b border-gray-300">
+      <div className="text-center p-6 bg-[rgba(240,191,34,0.5)] border-b border-gray-300">
         <h1 className="text-4xl font-semibold">Join our Trashy Market material collection!</h1>
         <p className="text-lg mt-2">These REmakers are accepting specific reusable materials at
            the Trashy Market (Nov 29-30). These materials will be transformed into one-of-a-kind 
@@ -118,30 +237,37 @@ const LandingPage = () => {
 
       <div className="flex flex-grow">
         {/* Makers Side */}
-        <div className="w-1/2 p-8 bg-gray-50 border-r border-gray-300">
+        <div className="w-1/2 p-8 bg-white border-r border-gray-300">
           <h2 className="text-2xl font-bold mb-4">REMAKER: Material Requests</h2>
-          <p className="text-base text-gray-800 mb-24">
+          <p className="text-base text-gray-800 mb-6">
             If you are a REmaker accepting materials at the Trashy Market, fill out the form below to post your material request.
+            Check in on the Collectors feed to claim your materials!
           </p>
-          <button
-            onClick={() => setSelectedForm("form1")}
-            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition"
+          <a
+            href="#"
+            onClick={(e) => {
+              e.preventDefault();
+              setSelectedForm("form1");
+            }}
+            className="text-[#1F5D53] font-bold text-xl underline hover:opacity-80"
           >
-            Select Makers Form
-          </button>
+            Makers Form
+          </a>
 
           <div className="mt-8">
-            {selectedForm === "form1" && <FormOne addToFeed={addToMakersFeed} />}
-            <div className="mt-6 p-4">
+            {selectedForm === "form1" && <FormOne addToFeed={addToMakersFeed} closeModal={closeModal} />}
+            <div className="mt-6 p-6 max-w-4xl mx-auto shadow-md">
               <h3 className="text-xl font-bold">Makers Feed</h3>
               <div className="space-y-6 overflow-y-auto max-h-96">
                 {makersFeed.map((item) => (
-                  <div key={item.id} className="bg-gray-200 p-4 rounded-lg">
-                    <img
-                      src={item.imageUrl}
-                      alt={item.description}
-                      className="w-full h-48 object-cover rounded-lg mb-4"
-                    />
+                  <div key={item.id} className="bg-white p-6 rounded-lg shadow-md">
+                    <div className="flex justify-center mb-4">
+                      <img
+                        src={item.imageUrl}
+                        alt={item.description}
+                        className="w-full sm:w-80 md:w-96 lg:w-[400px] xl:w-[500px] h-auto object-cover rounded-lg"
+                      />
+                    </div>
                     <p><strong>Business Name:</strong> {item.businessName}</p>
                     <p><strong>First Name:</strong> {item.firstName}</p>
                     <p><strong>Description:</strong> {item.description}</p>
@@ -162,7 +288,7 @@ const LandingPage = () => {
         </div>
 
         {/* Collectors Side */}
-        <div className="w-1/2 p-8 bg-gray-50">
+        <div className="w-1/2 p-8 bg-white">
           <h2 className="text-2xl font-bold mb-4">COLLECTOR: Material Offers</h2>
           <p className="text-base text-gray-800 mb-6">
             Scroll through the REmaker material requests to see if you have materials that match. 
@@ -171,24 +297,31 @@ const LandingPage = () => {
             approved, bring it to the REmaker at the Trashy Market 
             (Mrs. Murphy's Irish Bistro 3905 N Lincoln Ave).
           </p>
-          <button
-            onClick={() => setSelectedForm("form2")}
-            className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition"
+          <a
+            href="#"
+            onClick={(e) => {
+              e.preventDefault();
+              setSelectedForm("form2");
+            }}
+            className="text-[#1F5D53] font-bold text-xl underline hover:opacity-80"
           >
-            Select Collectors Form
-          </button>
+            Collectors Form
+          </a>
+
           <div className="mt-8">
-            {selectedForm === "form2" && <FormTwo addToFeed={addToCollectorsFeed} />}
-            <div className="mt-6 p-4">
+            {selectedForm === "form2" && <FormTwo addToFeed={addToCollectorsFeed} closeModal={closeModal} />}
+            <div className="mt-6 p-6 max-w-4xl mx-auto shadow-md">
               <h3 className="text-xl font-bold">Collectors Feed</h3>
               <div className="space-y-6 overflow-y-auto max-h-96">
                 {collectorsFeed.map((item) => (
-                  <div key={item.id} className="bg-gray-200 p-4 rounded-lg">
-                    <img
-                      src={item.imageUrl}
-                      alt={item.description}
-                      className="w-full h-48 object-cover rounded-lg mb-4"
-                    />
+                  <div key={item.id} className="bg-white p-6 rounded-lg shadow-md">
+                    <div className="flex justify-center mb-4">
+                      <img
+                        src={item.imageUrl}
+                        alt={item.description}
+                        className="w-full sm:w-80 md:w-96 lg:w-[400px] xl:w-[500px] h-auto object-cover rounded-lg"
+                      />
+                    </div>
                     <p><strong>First Name:</strong> {item.firstName}</p>
                     <p><strong>Email:</strong> {item.email}</p>
                     <p><strong>Description:</strong> {item.description}</p>
@@ -206,25 +339,20 @@ const LandingPage = () => {
                         <label className="block mb-2">
                           Accept this item! Enter your name to claim:
                         </label>
-
-                        {/* Input for first name when item is unclaimed */}
-                        {!item.claimedBy && (
-                          <div className="mb-4">
-                            <input
-                              type="text"
-                              placeholder="Your First Name"
-                              value={item.firstNameClaimed || ""}
-                              onChange={(e) => handleClaimFirstNameChange(item.id, e.target.value)}
-                              className="px-4 py-2 border border-gray-300 rounded-md"
-                            />
-                          </div>
-                        )}
-
-                        {/* Confirm button */}
+                        <div className="mb-4">
+                          <input
+                            type="text"
+                            placeholder="Your First Name"
+                            value={item.firstNameClaimed || ""}
+                            onChange={(e) => handleClaimFirstNameChange(item.id, e.target.value)}
+                            className="px-4 py-2 border border-gray-300 rounded-md"
+                          />
+                        </div>
                         <button
                           onClick={() => updateMarketStatus(item.id, "Accepted! Bring to the Market", item.firstNameClaimed || "")}
                           disabled={!item.firstNameClaimed}
-                          className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition"
+                          className="px-4 py-2 text-white rounded-lg hover:bg-blue-600 transition"
+                          style={{ backgroundColor: '#3856DE' }}
                         >
                           Confirm
                         </button>

@@ -17,11 +17,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const prompt = `Analyze the following image in base64 format. Describe the image in a single, engaging sentence that includes:
-    - The product type (e.g., utensils, clothing)
-    - The color (e.g., silver, blue)
-    - The quantity (e.g., two forks, one spoon).
-    Keep it natural, clear, and concise without being overly detailed.`;
+    const prompt = `Please Analyze the image in base64 format and 
+    describe the main item  for a product listing in a declarative tone, avoid using "the image". 
+    Focus on material composition, shape, color, condition, and size.
+    End with the product type (e.g., utensils, clothing), color (e.g., silver, blue), and quantity (e.g., two forks). Please limit the description to 40 words `;
+
+
 
     const completion = await openai.chat.completions.create({
       model: "gpt-4-turbo",

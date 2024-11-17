@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 
-const FormOne = ({ addToFeed }: { addToFeed: (item: any) => void }) => {
+const FormOne = ({ addToFeed, closeModal }: { addToFeed: (item: any) => void; closeModal: () => void }) => {
   const [imageBase64, setImageBase64] = useState<string>("");
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [description, setDescription] = useState<string>("");
@@ -73,26 +73,26 @@ const FormOne = ({ addToFeed }: { addToFeed: (item: any) => void }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
+  
     // Validation check
     if (!description || !type || !color || !quantity || !businessName || !firstName || !file) {
       alert("Please fill in all fields before submitting the listing.");
       return;
     }
-
+  
     const formData = new FormData();
     formData.append('image', file as Blob); // Cast to Blob to avoid type issues
-
+  
     try {
       const response = await fetch('/api/upload', {
         method: 'POST',
         body: formData,
       });
-
+  
       if (!response.ok) {
         throw new Error('Failed to upload image');
       }
-
+  
       const result = await response.json();
       const newListing = {
         imageUrl: result.secure_url, // Use the URL returned from Cloudinary
@@ -100,12 +100,25 @@ const FormOne = ({ addToFeed }: { addToFeed: (item: any) => void }) => {
         type,
         color,
         quantity,
-        businessName,
+        businessName, // Include businessName here
         firstName,
       };
-
-      addToFeed(newListing);
-
+  
+      const feedResponse = await fetch('/api/add-to-makers-feed', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newListing),
+      });
+  
+      if (!feedResponse.ok) {
+        throw new Error('Failed to add listing to the feed');
+      }
+  
+      const feedResult = await feedResponse.json();
+      addToFeed(feedResult.listing);
+  
       // Reset form
       setImageBase64("");
       setDescription("");
@@ -116,18 +129,19 @@ const FormOne = ({ addToFeed }: { addToFeed: (item: any) => void }) => {
       setFirstName("");
       setImageUrl(null);
       setFile(null);
-
-      router.push("/landing");
+  
+      closeModal();
     } catch (error) {
       console.error("Error uploading image:", error);
       alert("An error occurred while uploading the image.");
     }
   };
+  
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-lg relative">
       <button
-        onClick={() => router.push("/landing")}
+        onClick={closeModal}
         className="absolute top-2 right-2 text-gray-500 text-xl font-bold"
       >
         &times;
@@ -191,7 +205,8 @@ const FormOne = ({ addToFeed }: { addToFeed: (item: any) => void }) => {
           <button
             type="button"
             onClick={handleGPTGeneration}
-            className="mt-2 bg-blue-500 text-white px-4 py-1 rounded-lg"
+            className="mt-2 text-white px-4 py-1 rounded-lg"
+            style={{ backgroundColor: '#3856DE' }}
             disabled={loading}
           >
             {loading ? "Generating..." : "Generate Description with GPT"}
@@ -237,7 +252,8 @@ const FormOne = ({ addToFeed }: { addToFeed: (item: any) => void }) => {
         <div>
           <button
             type="submit"
-            className="w-full bg-green-500 text-white py-2 rounded-lg"
+            className="w-full text-white py-2 rounded-lg"
+            style={{ backgroundColor: '#1F5D53' }}
           >
             Submit Listing
           </button>

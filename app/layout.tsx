@@ -14,7 +14,7 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Rewerker",
+  title: "NowhereCollective",
   description: "A circular economy marketplace",
 };
 
@@ -25,6 +25,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <title>{String(metadata.title)}</title> {/* Explicitly convert to string */}
+        <meta name="description" content={metadata.description || "Default description"} />
+        <link rel="icon" href="/image.png" /> {/* Link to the new favicon */}
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
